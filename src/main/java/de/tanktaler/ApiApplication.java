@@ -1,5 +1,6 @@
 package de.tanktaler;
 
+import io.crnk.rs.CrnkFeature;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
 
@@ -9,7 +10,12 @@ public class ApiApplication extends Application<ApiConfiguration> {
     }
 
     @Override
-    public void run(ApiConfiguration configuration, Environment environment) throws Exception {
+    public void run(ApiConfiguration configuration, Environment environment) {
+        environment.jersey().register(new CrnkFeature());
+    }
 
+    @Override
+    public String getName() {
+        return "tanktaler-insider-program-api";
     }
 }
