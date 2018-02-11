@@ -30,7 +30,7 @@ import org.mongodb.morphia.annotations.Indexes;
   @Index(value = "email", fields = @Field("email"))
 )
 @JsonApiResource(type = "users")
-public final class User {
+public final class UserResource {
   @Id
   @JsonApiId
   private ObjectId id;

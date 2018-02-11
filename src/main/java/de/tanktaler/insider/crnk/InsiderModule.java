@@ -17,21 +17,17 @@
 package de.tanktaler.insider.crnk;
 
 import de.tanktaler.insider.models.User;
-import de.tanktaler.insider.resources.UserRepository;
-import io.crnk.core.engine.http.HttpRequestContext;
+import de.tanktaler.insider.resources.UserRepositoryResource;
 import io.crnk.core.engine.http.HttpRequestContextAware;
 import io.crnk.core.engine.http.HttpRequestContextProvider;
-import io.crnk.core.engine.http.HttpRequestProcessor;
 import io.crnk.core.module.SimpleModule;
 import org.mongodb.morphia.Datastore;
 
-import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 
 public final class InsiderModule extends SimpleModule implements HttpRequestContextAware {
   private final Datastore datastore;
-  private HttpRequestContextProvider requestContextProvider;
+  private HttpRequestContextProvider reqContextProvider;
 
   public InsiderModule(final Datastore datastore) {
     super(InsiderModule.class.getName());
@@ -40,36 +36,35 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
 
   @Override
   public void setupModule(ModuleContext ctx) {
-    this.addHttpRequestProcessor(new HttpRequestProcessor() { // @todo! move it out
-      @Override
-      public void process(HttpRequestContext context) throws IOException {
-        final String token = context.getRequestHeader("x-txn-auth-token");
-        Optional<User> user = Optional.empty();
-        if (!Objects.isNull(token) && !token.isEmpty()) {
-          user = Optional
-            .ofNullable(datastore.createQuery(User.class).filter("auth_tokens.token", token).get());
-        }
-        context.setRequestAttribute("user", user);
-
+    // @todo! move it out
+    this.addHttpRequestProcessor(context -> {
+      final String token = context.getRequestHeader("x-txn-auth-token");
+      if (!Objects.isNull(token) && !token.isEmpty()) {
+        context.setRequestAttribute(
+          "user",
+          datastore.createQuery(User.class).filter("auth_tokens.token", token).get()
+        );
       }
     });
-    this.addHttpRequestProcessor(new HttpRequestProcessor() { // @todo! move it out
-      @Override
-      public void process(HttpRequestContext context) throws IOException {
-        final Optional<User> user = (Optional<User>) context.getRequestAttribute("user");
-        if (!user.isPresent()) {
-          context.setResponse(403, "No token");
-        }
+    // @todo! move it out
+    this.addHttpRequestProcessor(context -> {
+      if (Objects.isNull(context.getRequestAttribute("user"))) {
+        context.setResponse(403, "No token");
       }
     });
 
-    this.addRepository(new UserRepository(datastore));
+    this.addRepository(
+      new UserRepositoryResource(
+        datastore,
+        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
+      )
+    );
 
     super.setupModule(ctx);
   }
 
   @Override
-  public void setHttpRequestContextProvider(HttpRequestContextProvider requestContextProvider) {
-    this.requestContextProvider = requestContextProvider;
+  public void setHttpRequestContextProvider(HttpRequestContextProvider reqContextProvider) {
+    this.reqContextProvider = reqContextProvider;
   }
 }

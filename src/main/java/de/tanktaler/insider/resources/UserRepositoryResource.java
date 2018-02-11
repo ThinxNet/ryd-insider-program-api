@@ -16,18 +16,23 @@
 
 package de.tanktaler.insider.resources;
 
+import de.tanktaler.insider.models.User;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.repository.ResourceRepositoryBase;
 import io.crnk.core.resource.list.ResourceList;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 
-public final class UserRepository extends ResourceRepositoryBase<User, ObjectId> {
-  private final Datastore datastore;
+import java.util.function.Supplier;
 
-  public UserRepository(final Datastore datastore) {
-    super(User.class);
+public final class UserRepositoryResource extends ResourceRepositoryBase<UserResource, ObjectId> {
+  private final Datastore datastore;
+  private final Supplier<User> currentUser;
+
+  public UserRepositoryResource(final Datastore datastore, final Supplier<User> currentUser) {
+    super(UserResource.class);
     this.datastore = datastore;
+    this.currentUser = currentUser;
   }
 
   @Override
@@ -36,13 +41,16 @@ public final class UserRepository extends ResourceRepositoryBase<User, ObjectId>
   }
 
   @Override
-  public synchronized <S extends User> S save(S user) {
+  public synchronized <S extends UserResource> S save(S user) {
     this.datastore.save(user);
     return user;
   }
 
   @Override
-  public synchronized ResourceList<User> findAll(QuerySpec querySpec) {
-    return querySpec.apply(this.datastore.createQuery(User.class).asList());
+  public synchronized ResourceList<UserResource> findAll(QuerySpec querySpec) {
+    return querySpec.apply(
+      this.datastore.createQuery(UserResource.class)
+        .filter("_id", this.currentUser.get().getId()).asList()
+    );
   }
 }
