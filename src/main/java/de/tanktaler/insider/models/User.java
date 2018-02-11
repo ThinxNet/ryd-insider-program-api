@@ -25,6 +25,8 @@ import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.Indexes;
 
+import java.util.List;
+
 @Entity("users")
 @Indexes(
   @Index(value = "email", fields = @Field("email"))
@@ -35,6 +37,7 @@ public final class User {
   @JsonApiId
   private ObjectId id;
   private String email;
+  private List<UserAuthToken> auth_tokens;
 
   public ObjectId getId() {
     return id;

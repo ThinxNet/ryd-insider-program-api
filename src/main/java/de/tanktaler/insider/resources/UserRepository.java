@@ -23,27 +23,26 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 
 public final class UserRepository extends ResourceRepositoryBase<User, ObjectId> {
+  private final Datastore datastore;
 
-    private final Datastore datastore;
+  public UserRepository(final Datastore datastore) {
+    super(User.class);
+    this.datastore = datastore;
+  }
 
-    public UserRepository(final Datastore datastore) {
-        super(User.class);
-        this.datastore = datastore;
-    }
+  @Override
+  public synchronized void delete(ObjectId id) {
+    //examples.remove(id);
+  }
 
-    @Override
-    public synchronized void delete(ObjectId id) {
-        //examples.remove(id);
-    }
+  @Override
+  public synchronized <S extends User> S save(S user) {
+    this.datastore.save(user);
+    return user;
+  }
 
-    @Override
-    public synchronized <S extends User> S save(S user) {
-        this.datastore.save(user);
-        return user;
-    }
-
-    @Override
-    public synchronized ResourceList<User> findAll(QuerySpec querySpec) {
-        return querySpec.apply(this.datastore.createQuery(User.class).asList());
-    }
+  @Override
+  public synchronized ResourceList<User> findAll(QuerySpec querySpec) {
+    return querySpec.apply(this.datastore.createQuery(User.class).asList());
+  }
 }

@@ -19,8 +19,7 @@ package de.tanktaler.insider;
 import com.mongodb.MongoClient;
 import de.tanktaler.insider.core.MongoHealthCheck;
 import de.tanktaler.insider.core.MongoManaged;
-import de.tanktaler.insider.resources.UserRepository;
-import io.crnk.core.module.Module;
+import de.tanktaler.insider.crnk.InsiderModule;
 import io.crnk.rs.CrnkFeature;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
@@ -45,6 +44,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
 
   @Override
   public void run(ApiConfiguration configuration, Environment environment) {
+    // @todo! remove it
     FilterRegistration.Dynamic filter = environment.servlets()
       .addFilter("CrossOriginFilter", CrossOriginFilter.class);
     filter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "http://localhost:*");
@@ -53,7 +53,6 @@ public final class ApiApplication extends Application<ApiConfiguration> {
       "Authorization,X-Requested-With,Content-Type,Accept,Origin"
     );
     filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "*");
-
 
     final MongoClient mongo = new MongoClient();
     final Morphia morphia = new Morphia();
@@ -65,17 +64,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.healthChecks().register("mongo", new MongoHealthCheck(datastore));
 
     final CrnkFeature crnk = new CrnkFeature();
-    crnk.getBoot().addModule(new Module() {
-      @Override
-      public String getModuleName() {
-        return null;
-      }
-
-      @Override
-      public void setupModule(ModuleContext ctx) {
-        ctx.addRepository(new UserRepository(datastore));
-      }
-    });
+    crnk.getBoot().addModule(new InsiderModule(datastore));
 
     environment.jersey().register(crnk);
   }
