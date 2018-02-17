@@ -16,8 +16,9 @@
 
 package de.tanktaler.insider.crnk;
 
-import de.tanktaler.insider.model.User;
-import de.tanktaler.insider.resource.UserRepositoryResource;
+import de.tanktaler.insider.model.user.User;
+import de.tanktaler.insider.resource.ThingRepository;
+import de.tanktaler.insider.resource.UserRepository;
 import io.crnk.core.engine.http.HttpRequestContextAware;
 import io.crnk.core.engine.http.HttpRequestContextProvider;
 import io.crnk.core.module.SimpleModule;
@@ -54,7 +55,14 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
     });
 
     this.addRepository(
-      new UserRepositoryResource(
+      new UserRepository(
+        datastore,
+        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
+      )
+    );
+
+    this.addRepository(
+      new ThingRepository(
         datastore,
         () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
       )

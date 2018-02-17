@@ -16,7 +16,7 @@
 
 package de.tanktaler.insider.resource;
 
-import de.tanktaler.insider.model.User;
+import de.tanktaler.insider.model.user.User;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.repository.ResourceRepositoryBase;
 import io.crnk.core.resource.list.ResourceList;
@@ -25,32 +25,32 @@ import org.mongodb.morphia.Datastore;
 
 import java.util.function.Supplier;
 
-public final class UserRepositoryResource extends ResourceRepositoryBase<UserResource, ObjectId> {
+public final class UserRepository extends ResourceRepositoryBase<User, ObjectId> {
   private final Datastore datastore;
   private final Supplier<User> currentUser;
 
-  public UserRepositoryResource(final Datastore datastore, final Supplier<User> currentUser) {
-    super(UserResource.class);
+  public UserRepository(final Datastore datastore, final Supplier<User> currentUser) {
+    super(User.class);
     this.datastore = datastore;
     this.currentUser = currentUser;
   }
 
   @Override
-  public <S extends UserResource> S save(S user) {
+  public <S extends User> S save(S user) {
     this.datastore.save(user);
     return user;
   }
 
   @Override
-  public ResourceList<UserResource> findAll(QuerySpec querySpec) {
+  public ResourceList<User> findAll(QuerySpec querySpec) {
     return querySpec.apply(
-      this.datastore.createQuery(UserResource.class)
+      this.datastore.createQuery(User.class)
         .filter("_id", this.currentUser.get().getId()).asList()
     );
   }
 
   @Override
-	public <S extends UserResource> S create(S user) {
+	public <S extends User> S create(S user) {
 		throw new UnsupportedOperationException();
 	}
 }

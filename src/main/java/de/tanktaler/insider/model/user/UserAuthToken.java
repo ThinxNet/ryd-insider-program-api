@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model;
+package de.tanktaler.insider.model.user;
 
 public final class UserAuthToken {
   private String token;

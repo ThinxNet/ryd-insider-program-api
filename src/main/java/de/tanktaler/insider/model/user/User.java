@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model;
+package de.tanktaler.insider.model.user;
 
+import de.tanktaler.insider.model.thing.Thing;
 import io.crnk.core.resource.annotations.JsonApiId;
+import io.crnk.core.resource.annotations.JsonApiRelation;
 import io.crnk.core.resource.annotations.JsonApiResource;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
@@ -24,10 +26,11 @@ import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.Indexes;
+import org.mongodb.morphia.annotations.Reference;
 
 import java.util.List;
 
-@Entity("users")
+@Entity(value = "users", noClassnameStored = true)
 @Indexes(
   @Index(value = "email", fields = @Field("email"))
 )
@@ -39,16 +42,19 @@ public final class User {
   private String email;
   private List<UserAuthToken> auth_tokens;
 
+  @JsonApiRelation
+  @Reference
+  private List<Thing> things;
+
   public ObjectId getId() {
     return id;
   }
 
-  public User setId(ObjectId id) {
-    this.id = id;
-    return this;
-  }
-
   public String getEmail() {
     return email;
+  }
+
+  public List<Thing> getThings() {
+    return things;
   }
 }
