@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.resources;
+package de.tanktaler.insider.resource;
 
-import de.tanktaler.insider.models.User;
+import de.tanktaler.insider.model.User;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.repository.ResourceRepositoryBase;
 import io.crnk.core.resource.list.ResourceList;
@@ -36,21 +36,21 @@ public final class UserRepositoryResource extends ResourceRepositoryBase<UserRes
   }
 
   @Override
-  public synchronized void delete(ObjectId id) {
-    //examples.remove(id);
-  }
-
-  @Override
-  public synchronized <S extends UserResource> S save(S user) {
+  public <S extends UserResource> S save(S user) {
     this.datastore.save(user);
     return user;
   }
 
   @Override
-  public synchronized ResourceList<UserResource> findAll(QuerySpec querySpec) {
+  public ResourceList<UserResource> findAll(QuerySpec querySpec) {
     return querySpec.apply(
       this.datastore.createQuery(UserResource.class)
         .filter("_id", this.currentUser.get().getId()).asList()
     );
   }
+
+  @Override
+	public <S extends UserResource> S create(S user) {
+		throw new UnsupportedOperationException();
+	}
 }

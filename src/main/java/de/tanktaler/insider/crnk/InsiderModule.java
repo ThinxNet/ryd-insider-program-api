@@ -16,8 +16,8 @@
 
 package de.tanktaler.insider.crnk;
 
-import de.tanktaler.insider.models.User;
-import de.tanktaler.insider.resources.UserRepositoryResource;
+import de.tanktaler.insider.model.User;
+import de.tanktaler.insider.resource.UserRepositoryResource;
 import io.crnk.core.engine.http.HttpRequestContextAware;
 import io.crnk.core.engine.http.HttpRequestContextProvider;
 import io.crnk.core.module.SimpleModule;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.models;
+package de.tanktaler.insider.model;
 
 import io.crnk.core.resource.annotations.JsonApiId;
 import io.crnk.core.resource.annotations.JsonApiResource;
@@ -50,10 +50,5 @@ public final class User {
 
   public String getEmail() {
     return email;
-  }
-
-  public User setEmail(String email) {
-    this.email = email;
-    return this;
   }
 }

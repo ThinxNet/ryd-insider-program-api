@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.resources;
+package de.tanktaler.insider.resource;
 
 import io.crnk.core.resource.annotations.JsonApiId;
 import io.crnk.core.resource.annotations.JsonApiResource;
