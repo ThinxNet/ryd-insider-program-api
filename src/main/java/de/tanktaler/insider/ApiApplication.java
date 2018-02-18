@@ -17,6 +17,7 @@
 package de.tanktaler.insider;
 
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import de.tanktaler.insider.core.MongoHealthCheck;
 import de.tanktaler.insider.core.MongoManaged;
 import de.tanktaler.insider.crnk.InsiderModule;
@@ -50,21 +51,31 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     filter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "http://localhost:*");
     filter.setInitParameter(
       CrossOriginFilter.ALLOWED_HEADERS_PARAM,
-      "Authorization,X-Requested-With,Content-Type,Accept,Origin"
+      "Authorization,X-Requested-With,X-Txn-Auth-Token,Content-Type,Accept,Origin"
     );
     filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "*");
 
-    final MongoClient mongo = new MongoClient();
+    // @todo! move these to a bundle
     final Morphia morphia = new Morphia();
     morphia.mapPackage("de.tanktaler.insider.resources");
 
-    final Datastore datastore = morphia.createDatastore(mongo, "insider_program");
+    final MongoClientURI dsInsiderUri = configuration.getDbInsider().getUri();
+    final MongoClientURI dsSessionUri = configuration.getDbSession().getUri();
 
-    environment.lifecycle().manage(new MongoManaged(mongo, datastore));
-    environment.healthChecks().register("mongo", new MongoHealthCheck(datastore));
+    final MongoClient mongoInsider = new MongoClient(dsInsiderUri);
+    final MongoClient mongoSession = new MongoClient(dsSessionUri);
+
+    final Datastore dsInsider = morphia.createDatastore(mongoInsider, dsInsiderUri.getDatabase());
+    final Datastore dsSession = morphia.createDatastore(mongoSession, dsSessionUri.getDatabase());
+
+    environment.lifecycle().manage(new MongoManaged(mongoInsider, dsInsider));
+    environment.lifecycle().manage(new MongoManaged(mongoSession, dsSession));
+
+    environment.healthChecks().register("mongoInsider", new MongoHealthCheck(dsInsider));
+    environment.healthChecks().register("mongoSession", new MongoHealthCheck(dsSession));
 
     final CrnkFeature crnk = new CrnkFeature();
-    crnk.getBoot().addModule(new InsiderModule(datastore));
+    crnk.getBoot().addModule(new InsiderModule(dsInsider, dsSession));
 
     environment.jersey().register(crnk);
   }

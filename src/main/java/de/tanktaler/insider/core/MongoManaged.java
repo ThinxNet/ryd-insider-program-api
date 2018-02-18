@@ -29,17 +29,17 @@ public final class MongoManaged implements Managed {
       this.datastore = datastore;
   }
 
-  public Datastore datastore() {
-    return this.datastore;
-  }
-
   @Override
-  public void start() throws Exception {
+  public void start() {
     this.datastore.ensureIndexes(true);
   }
 
   @Override
   public void stop() throws Exception {
-    this.instance.close();
+    try {
+      this.instance.close();
+    } catch (Exception e) {
+      throw new Exception("Unable to close the mongo connection", e);
+    }
   }
 }

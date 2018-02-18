@@ -42,6 +42,8 @@ public final class Thing {
 
   private String account;
 
+  private String nickName;
+
   private ThingYmme ymme;
 
   @JsonApiRelation
@@ -54,5 +56,13 @@ public final class Thing {
 
   public ThingYmme getYmme() {
     return ymme;
+  }
+
+  public String getAccount() {
+    return account;
+  }
+
+  public String getNickName() {
+    return nickName;
   }
 }

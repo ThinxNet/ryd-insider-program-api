@@ -1,0 +1,5 @@
+db_insider:
+  uri: "mongodb://localhost:27017/insider_program"
+
+db_session:
+  uri: "mongodb://localhost:27017/insider_program"

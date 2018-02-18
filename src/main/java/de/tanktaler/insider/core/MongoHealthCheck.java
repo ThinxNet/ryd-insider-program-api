@@ -29,7 +29,7 @@ public class MongoHealthCheck extends HealthCheck {
   }
 
   @Override
-  protected Result check() throws Exception {
+  protected Result check() {
     try {
       final CommandResult stats = datastore.getDB().getStats();
       return stats.ok() ? Result.healthy() : Result.unhealthy(stats.getErrorMessage());

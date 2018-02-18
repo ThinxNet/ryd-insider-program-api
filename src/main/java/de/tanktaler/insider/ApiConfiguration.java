@@ -16,8 +16,54 @@
 
 package de.tanktaler.insider;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mongodb.MongoClientURI;
 import io.dropwizard.Configuration;
 
-public final class ApiConfiguration extends Configuration {
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
+public final class ApiConfiguration extends Configuration {
+  @NotNull
+  @Valid
+  private Database dbInsider;
+
+  @NotNull
+  @Valid
+  private Database dbSession;
+
+  @JsonProperty("db_insider")
+  public void setDbInsider(final Database dbInsider) {
+    this.dbInsider = dbInsider;
+  }
+
+  @JsonProperty("db_insider")
+  public Database getDbInsider() {
+    return this.dbInsider;
+  }
+
+  @JsonProperty("db_session")
+  public void setDbSession(final Database dbSession) {
+    this.dbSession = dbSession;
+  }
+
+  @JsonProperty("db_session")
+  public Database getDbSession() {
+    return this.dbSession;
+  }
+
+  public static class Database {
+    @NotNull
+    private MongoClientURI uri;
+
+    @JsonProperty("uri")
+    public void setUri(final String uri) {
+      this.uri = new MongoClientURI(uri);
+    }
+
+    @JsonProperty("uri")
+    public MongoClientURI getUri() {
+      return this.uri;
+    }
+  }
 }

@@ -27,23 +27,29 @@ import org.mongodb.morphia.Datastore;
 import java.util.Objects;
 
 public final class InsiderModule extends SimpleModule implements HttpRequestContextAware {
-  private final Datastore datastore;
+  private final Datastore dsInsider;
+  private final Datastore dsSession;
   private HttpRequestContextProvider reqContextProvider;
 
-  public InsiderModule(final Datastore datastore) {
+  public InsiderModule(final Datastore dsInsider, final Datastore dsSession) {
     super(InsiderModule.class.getName());
-    this.datastore = datastore;
+    this.dsInsider = dsInsider;
+    this.dsSession = dsSession;
   }
 
   @Override
   public void setupModule(ModuleContext ctx) {
     // @todo! move it out
     this.addHttpRequestProcessor(context -> {
+      if (context.getMethod().equals("OPTIONS")) {
+        context.setResponse(200, "OK");
+        return;
+      }
       final String token = context.getRequestHeader("x-txn-auth-token");
       if (!Objects.isNull(token) && !token.isEmpty()) {
         context.setRequestAttribute(
           "user",
-          datastore.createQuery(User.class).filter("auth_tokens.token", token).get()
+          this.dsInsider.createQuery(User.class).filter("auth_tokens.token", token).get()
         );
       }
     });
@@ -56,14 +62,14 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
 
     this.addRepository(
       new UserRepository(
-        datastore,
+        this.dsInsider,
         () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
       )
     );
 
     this.addRepository(
       new ThingRepository(
-        datastore,
+        this.dsInsider,
         () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
       )
     );

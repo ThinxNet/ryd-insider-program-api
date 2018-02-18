@@ -33,4 +33,28 @@ public final class ThingYmme {
   public String getFuelType() {
     return fuelType;
   }
+
+  public String getMake() {
+    return make;
+  }
+
+  public String getModel() {
+    return model;
+  }
+
+  public String getModelType() {
+    return modelType;
+  }
+
+  public String getVehicleId() {
+    return vehicleId;
+  }
+
+  public String getVIN() {
+    return VIN;
+  }
+
+  public String getYear() {
+    return year;
+  }
 }

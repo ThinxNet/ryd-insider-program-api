@@ -8,10 +8,11 @@ Collection: `things`
 
 `root`:
 
-| Name         | Type             | Example       |
-| :---         |     :----        | :---          |
-| `_id`        | `ObjectId`       |               |
-| `ymme`       | `Object`         |               |
+| Name         | Type             | Example        |
+| :---         |     :----        | :---           |
+| `_id`        | `ObjectId`       |                |
+| `ymme`       | `Object`         |                |
+| `nickName`   | `String`         | My awesome car |
 
 `ymme`:
 
