@@ -42,7 +42,7 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
   }
 
   @Override
-  public void setupModule(ModuleContext ctx) {
+  public void setupModule(final ModuleContext ctx) {
     // @todo! move it out
     this.addHttpRequestProcessor(context -> {
       if (context.getMethod().equals("OPTIONS")) {
@@ -57,6 +57,7 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
         );
       }
     });
+
     // @todo! move it out
     this.addHttpRequestProcessor(context -> {
       if (Objects.isNull(context.getRequestAttribute("user"))) {
@@ -104,7 +105,7 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
   }
 
   @Override
-  public void setHttpRequestContextProvider(HttpRequestContextProvider reqContextProvider) {
+  public void setHttpRequestContextProvider(final HttpRequestContextProvider reqContextProvider) {
     this.reqContextProvider = reqContextProvider;
   }
 }

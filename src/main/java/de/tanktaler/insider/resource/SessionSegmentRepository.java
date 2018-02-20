@@ -38,20 +38,20 @@ public final class SessionSegmentRepository
   }
 
   @Override
-  public <S extends SessionSegment> S save(S segment) {
+  public <S extends SessionSegment> S save(final S segment) {
     this.datastore.save(segment);
     return segment;
   }
 
   @Override
-  public ResourceList<SessionSegment> findAll(QuerySpec querySpec) {
+  public ResourceList<SessionSegment> findAll(final QuerySpec querySpec) {
     return querySpec.apply(
       this.datastore.createQuery(SessionSegment.class).field("esn").equal("4532313244").fetch()
     );
   }
 
   @Override
-	public <S extends SessionSegment> S create(S segment) {
+	public <S extends SessionSegment> S create(final S segment) {
 		throw new UnsupportedOperationException();
 	}
 }

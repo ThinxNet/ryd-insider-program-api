@@ -25,8 +25,8 @@ public final class MongoManaged implements Managed {
   private final Mongo instance;
 
   public MongoManaged(final Mongo mongo, final Datastore datastore) {
-      this.instance = mongo;
-      this.datastore = datastore;
+    this.instance = mongo;
+    this.datastore = datastore;
   }
 
   @Override

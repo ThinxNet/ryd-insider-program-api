@@ -20,10 +20,9 @@ import de.tanktaler.insider.model.user.User;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.repository.ResourceRepositoryBase;
 import io.crnk.core.resource.list.ResourceList;
+import java.util.function.Supplier;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
-
-import java.util.function.Supplier;
 
 public final class UserRepository extends ResourceRepositoryBase<User, ObjectId> {
   private final Datastore datastore;
@@ -36,13 +35,13 @@ public final class UserRepository extends ResourceRepositoryBase<User, ObjectId>
   }
 
   @Override
-  public <S extends User> S save(S user) {
+  public <S extends User> S save(final S user) {
     this.datastore.save(user);
     return user;
   }
 
   @Override
-  public ResourceList<User> findAll(QuerySpec querySpec) {
+  public ResourceList<User> findAll(final QuerySpec querySpec) {
     return querySpec.apply(
       this.datastore.createQuery(User.class)
         .filter("_id", this.currentUser.get().getId()).asList()
@@ -50,7 +49,7 @@ public final class UserRepository extends ResourceRepositoryBase<User, ObjectId>
   }
 
   @Override
-	public <S extends User> S create(S user) {
-		throw new UnsupportedOperationException();
-	}
+  public <S extends User> S create(final S user) {
+    throw new UnsupportedOperationException();
+  }
 }

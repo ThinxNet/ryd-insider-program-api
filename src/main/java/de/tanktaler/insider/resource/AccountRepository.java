@@ -38,13 +38,13 @@ public final class AccountRepository extends ResourceRepositoryBase<Account, Obj
   }
 
   @Override
-  public <S extends Account> S save(S account) {
+  public <S extends Account> S save(final S account) {
     this.datastore.save(account);
     return account;
   }
 
   @Override
-  public ResourceList<Account> findAll(QuerySpec querySpec) {
+  public ResourceList<Account> findAll(final QuerySpec querySpec) {
     return querySpec.apply(
       this.datastore.createQuery(Account.class)
         .field("users.id").equal(this.currentUser.get().getId())
@@ -53,7 +53,7 @@ public final class AccountRepository extends ResourceRepositoryBase<Account, Obj
   }
 
   @Override
-	public <S extends Account> S create(S account) {
+	public <S extends Account> S create(final S account) {
 		throw new UnsupportedOperationException();
 	}
 }

@@ -37,13 +37,13 @@ public final class ThingRepository extends ResourceRepositoryBase<Thing, ObjectI
   }
 
   @Override
-  public <S extends Thing> S save(S thing) {
+  public <S extends Thing> S save(final S thing) {
     this.datastore.save(thing);
     return thing;
   }
 
   @Override
-  public ResourceList<Thing> findAll(QuerySpec querySpec) {
+  public ResourceList<Thing> findAll(final QuerySpec querySpec) {
     return querySpec.apply(
       this.datastore.createQuery(Thing.class)
         .filter("users.id", this.currentUser.get().getId()).asList()
@@ -51,7 +51,7 @@ public final class ThingRepository extends ResourceRepositoryBase<Thing, ObjectI
   }
 
   @Override
-	public <S extends Thing> S create(S thing) {
+	public <S extends Thing> S create(final S thing) {
 		throw new UnsupportedOperationException();
 	}
 }

@@ -38,20 +38,20 @@ public final class SessionSummaryRepository
   }
 
   @Override
-  public <S extends SessionSummary> S save(S summary) {
+  public <S extends SessionSummary> S save(final S summary) {
     this.datastore.save(summary);
     return summary;
   }
 
   @Override
-  public ResourceList<SessionSummary> findAll(QuerySpec querySpec) {
+  public ResourceList<SessionSummary> findAll(final QuerySpec querySpec) {
     return querySpec.apply(
       this.datastore.createQuery(SessionSummary.class).field("esn").equal("4532313244").fetch()
     );
   }
 
   @Override
-	public <S extends SessionSummary> S create(S summary) {
+	public <S extends SessionSummary> S create(final S summary) {
 		throw new UnsupportedOperationException();
 	}
 }

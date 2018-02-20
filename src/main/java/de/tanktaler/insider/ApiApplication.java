@@ -34,12 +34,12 @@ import javax.servlet.FilterRegistration;
 import java.util.EnumSet;
 
 public final class ApiApplication extends Application<ApiConfiguration> {
-  public static void main(String[] args) throws Exception {
+  public static void main(final String[] args) throws Exception {
     (new ApiApplication()).run(args);
   }
 
   @Override
-	public void initialize(Bootstrap<ApiConfiguration> bootstrap) {
+  public void initialize(Bootstrap<ApiConfiguration> bootstrap) {
 
   }
 

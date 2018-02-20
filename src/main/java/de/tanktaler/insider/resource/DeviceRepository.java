@@ -38,13 +38,13 @@ public final class DeviceRepository extends ResourceRepositoryBase<Device, Objec
   }
 
   @Override
-  public <S extends Device> S save(S device) {
+  public <S extends Device> S save(final S device) {
     this.datastore.save(device);
     return device;
   }
 
   @Override
-  public ResourceList<Device> findAll(QuerySpec querySpec) {
+  public ResourceList<Device> findAll(final QuerySpec querySpec) {
     return querySpec.apply(
       this.datastore.createQuery(Device.class)
         .field("thing").in(
@@ -56,7 +56,7 @@ public final class DeviceRepository extends ResourceRepositoryBase<Device, Objec
   }
 
   @Override
-	public <S extends Device> S create(S device) {
+	public <S extends Device> S create(final S device) {
 		throw new UnsupportedOperationException();
 	}
 }
