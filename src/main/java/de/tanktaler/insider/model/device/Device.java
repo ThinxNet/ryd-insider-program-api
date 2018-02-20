@@ -14,39 +14,45 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model.user;
+package de.tanktaler.insider.model.device;
 
-import de.tanktaler.insider.model.CustomEntityRelation;
+import de.tanktaler.insider.model.thing.Thing;
 import io.crnk.core.resource.annotations.JsonApiId;
+import io.crnk.core.resource.annotations.JsonApiRelation;
 import io.crnk.core.resource.annotations.JsonApiResource;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Reference;
 
-import java.util.List;
-
-@Entity(value = "users", noClassnameStored = true)
-@JsonApiResource(type = "users")
-public final class User {
+@Entity(value = "devices", noClassnameStored = true)
+@JsonApiResource(type = "devices")
+public final class Device {
   @Id
   @JsonApiId
   private ObjectId id;
 
-  private String email;
+  @JsonApiRelation
+  @Reference(idOnly = true)
+  private Thing thing;
 
-  private List<CustomEntityRelation> things;
+  private String sn;
 
-  private List<UserAuthToken> auth_tokens;
+  private Boolean pluggedIn;
 
   public ObjectId getId() {
     return id;
   }
 
-  public String getEmail() {
-    return email;
+  public Thing getThing() {
+    return thing;
   }
 
-  public List<CustomEntityRelation> getThings() {
-    return things;
+  public String getSn() {
+    return sn;
+  }
+
+  public Boolean getPluggedIn() {
+    return pluggedIn;
   }
 }

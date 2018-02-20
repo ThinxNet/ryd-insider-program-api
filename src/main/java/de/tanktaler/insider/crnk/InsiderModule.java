@@ -17,6 +17,10 @@
 package de.tanktaler.insider.crnk;
 
 import de.tanktaler.insider.model.user.User;
+import de.tanktaler.insider.resource.AccountRepository;
+import de.tanktaler.insider.resource.DeviceRepository;
+import de.tanktaler.insider.resource.SessionSegmentRepository;
+import de.tanktaler.insider.resource.SessionSummaryRepository;
 import de.tanktaler.insider.resource.ThingRepository;
 import de.tanktaler.insider.resource.UserRepository;
 import io.crnk.core.engine.http.HttpRequestContextAware;
@@ -59,17 +63,39 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
         context.setResponse(403, "No token");
       }
     });
-
     this.addRepository(
       new UserRepository(
         this.dsInsider,
         () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
       )
     );
-
     this.addRepository(
       new ThingRepository(
         this.dsInsider,
+        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
+      )
+    );
+    this.addRepository(
+      new DeviceRepository(
+        this.dsInsider,
+        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
+      )
+    );
+    this.addRepository(
+      new AccountRepository(
+        this.dsInsider,
+        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
+      )
+    );
+    this.addRepository(
+      new SessionSummaryRepository(
+        this.dsSession,
+        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
+      )
+    );
+    this.addRepository(
+      new SessionSegmentRepository(
+        this.dsSession,
         () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
       )
     );

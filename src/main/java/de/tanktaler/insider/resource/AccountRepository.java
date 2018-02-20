@@ -16,7 +16,8 @@
 
 package de.tanktaler.insider.resource;
 
-import de.tanktaler.insider.model.thing.Thing;
+import de.tanktaler.insider.model.account.Account;
+import de.tanktaler.insider.model.account.AccountRole;
 import de.tanktaler.insider.model.user.User;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.repository.ResourceRepositoryBase;
@@ -26,32 +27,33 @@ import org.mongodb.morphia.Datastore;
 
 import java.util.function.Supplier;
 
-public final class ThingRepository extends ResourceRepositoryBase<Thing, ObjectId> {
+public final class AccountRepository extends ResourceRepositoryBase<Account, ObjectId> {
   private final Datastore datastore;
   private final Supplier<User> currentUser;
 
-  public ThingRepository(final Datastore datastore, final Supplier<User> currentUser) {
-    super(Thing.class);
+  public AccountRepository(final Datastore datastore, final Supplier<User> currentUser) {
+    super(Account.class);
     this.datastore = datastore;
     this.currentUser = currentUser;
   }
 
   @Override
-  public <S extends Thing> S save(S thing) {
-    this.datastore.save(thing);
-    return thing;
+  public <S extends Account> S save(S account) {
+    this.datastore.save(account);
+    return account;
   }
 
   @Override
-  public ResourceList<Thing> findAll(QuerySpec querySpec) {
+  public ResourceList<Account> findAll(QuerySpec querySpec) {
     return querySpec.apply(
-      this.datastore.createQuery(Thing.class)
-        .filter("users.id", this.currentUser.get().getId()).asList()
+      this.datastore.createQuery(Account.class)
+        .field("users.id").equal(this.currentUser.get().getId())
+        .field("users.role").equal(AccountRole.ACCOUNT_OWNER).fetch()
     );
   }
 
   @Override
-	public <S extends Thing> S create(S thing) {
+	public <S extends Account> S create(S account) {
 		throw new UnsupportedOperationException();
 	}
 }

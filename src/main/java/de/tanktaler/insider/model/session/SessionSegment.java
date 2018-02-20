@@ -14,39 +14,49 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model.user;
+package de.tanktaler.insider.model.session;
 
-import de.tanktaler.insider.model.CustomEntityRelation;
 import io.crnk.core.resource.annotations.JsonApiId;
 import io.crnk.core.resource.annotations.JsonApiResource;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Index;
+import org.mongodb.morphia.annotations.Indexes;
 
-import java.util.List;
+import java.time.Instant;
 
-@Entity(value = "users", noClassnameStored = true)
-@JsonApiResource(type = "users")
-public final class User {
+@Entity(value = "ip_session_segment", noClassnameStored = true)
+@Indexes(
+  @Index(value = "idx_esn_timestamp", fields = {@Field("esn"), @Field("timestamp")})
+)
+@JsonApiResource(type = "session-segments")
+public final class SessionSegment {
   @Id
   @JsonApiId
   private ObjectId id;
 
-  private String email;
+  private String esn;
 
-  private List<CustomEntityRelation> things;
+  private Instant timestamp;
 
-  private List<UserAuthToken> auth_tokens;
+  private Document attributes;
 
   public ObjectId getId() {
-    return id;
+    return this.id;
   }
 
-  public String getEmail() {
-    return email;
+  public String getEsn() {
+    return this.esn;
   }
 
-  public List<CustomEntityRelation> getThings() {
-    return things;
+  public Instant getTimestamp() {
+    return this.timestamp;
+  }
+
+  public Document getAttributes() {
+    return this.attributes;
   }
 }

@@ -16,7 +16,7 @@
 
 package de.tanktaler.insider.resource;
 
-import de.tanktaler.insider.model.thing.Thing;
+import de.tanktaler.insider.model.device.Device;
 import de.tanktaler.insider.model.user.User;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.repository.ResourceRepositoryBase;
@@ -25,33 +25,38 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-public final class ThingRepository extends ResourceRepositoryBase<Thing, ObjectId> {
+public final class DeviceRepository extends ResourceRepositoryBase<Device, ObjectId> {
   private final Datastore datastore;
   private final Supplier<User> currentUser;
 
-  public ThingRepository(final Datastore datastore, final Supplier<User> currentUser) {
-    super(Thing.class);
+  public DeviceRepository(final Datastore datastore, final Supplier<User> currentUser) {
+    super(Device.class);
     this.datastore = datastore;
     this.currentUser = currentUser;
   }
 
   @Override
-  public <S extends Thing> S save(S thing) {
-    this.datastore.save(thing);
-    return thing;
+  public <S extends Device> S save(S device) {
+    this.datastore.save(device);
+    return device;
   }
 
   @Override
-  public ResourceList<Thing> findAll(QuerySpec querySpec) {
+  public ResourceList<Device> findAll(QuerySpec querySpec) {
     return querySpec.apply(
-      this.datastore.createQuery(Thing.class)
-        .filter("users.id", this.currentUser.get().getId()).asList()
+      this.datastore.createQuery(Device.class)
+        .field("thing").in(
+          this.currentUser.get().getThings().stream()
+            .map(e -> new ObjectId(e.getId())).collect(Collectors.toSet())
+        )
+        .asList()
     );
   }
 
   @Override
-	public <S extends Thing> S create(S thing) {
+	public <S extends Device> S create(S device) {
 		throw new UnsupportedOperationException();
 	}
 }
