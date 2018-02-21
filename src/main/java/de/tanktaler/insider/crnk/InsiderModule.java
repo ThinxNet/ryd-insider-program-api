@@ -26,9 +26,8 @@ import de.tanktaler.insider.resource.UserRepository;
 import io.crnk.core.engine.http.HttpRequestContextAware;
 import io.crnk.core.engine.http.HttpRequestContextProvider;
 import io.crnk.core.module.SimpleModule;
-import org.mongodb.morphia.Datastore;
-
 import java.util.Objects;
+import org.mongodb.morphia.Datastore;
 
 public final class InsiderModule extends SimpleModule implements HttpRequestContextAware {
   private final Datastore dsInsider;

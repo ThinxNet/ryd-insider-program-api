@@ -39,12 +39,12 @@ public final class ApiApplication extends Application<ApiConfiguration> {
   }
 
   @Override
-  public void initialize(Bootstrap<ApiConfiguration> bootstrap) {
+  public void initialize(final Bootstrap<ApiConfiguration> bootstrap) {
 
   }
 
   @Override
-  public void run(ApiConfiguration configuration, Environment environment) {
+  public void run(final ApiConfiguration configuration, final Environment environment) {
     // @todo! remove it
     FilterRegistration.Dynamic filter = environment.servlets()
       .addFilter("CrossOriginFilter", CrossOriginFilter.class);

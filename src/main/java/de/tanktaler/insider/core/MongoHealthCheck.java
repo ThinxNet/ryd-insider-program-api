@@ -24,7 +24,7 @@ import org.mongodb.morphia.Datastore;
 public class MongoHealthCheck extends HealthCheck {
   private final Datastore datastore;
 
-  public MongoHealthCheck(Datastore datastore) {
+  public MongoHealthCheck(final Datastore datastore) {
     this.datastore = datastore;
   }
 

@@ -51,7 +51,7 @@ public final class SessionSummaryRepository
   }
 
   @Override
-	public <S extends SessionSummary> S create(final S summary) {
-		throw new UnsupportedOperationException();
-	}
+  public <S extends SessionSummary> S create(final S summary) {
+    throw new UnsupportedOperationException();
+  }
 }

@@ -51,7 +51,7 @@ public final class SessionSegmentRepository
   }
 
   @Override
-	public <S extends SessionSegment> S create(final S segment) {
-		throw new UnsupportedOperationException();
-	}
+  public <S extends SessionSegment> S create(final S segment) {
+    throw new UnsupportedOperationException();
+  }
 }

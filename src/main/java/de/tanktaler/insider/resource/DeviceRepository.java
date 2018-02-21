@@ -56,7 +56,7 @@ public final class DeviceRepository extends ResourceRepositoryBase<Device, Objec
   }
 
   @Override
-	public <S extends Device> S create(final S device) {
-		throw new UnsupportedOperationException();
-	}
+  public <S extends Device> S create(final S device) {
+    throw new UnsupportedOperationException();
+  }
 }

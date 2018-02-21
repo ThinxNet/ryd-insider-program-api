@@ -51,7 +51,7 @@ public final class ThingRepository extends ResourceRepositoryBase<Thing, ObjectI
   }
 
   @Override
-	public <S extends Thing> S create(final S thing) {
-		throw new UnsupportedOperationException();
-	}
+  public <S extends Thing> S create(final S thing) {
+    throw new UnsupportedOperationException();
+  }
 }
