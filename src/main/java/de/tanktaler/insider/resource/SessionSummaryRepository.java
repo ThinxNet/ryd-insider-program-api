@@ -24,7 +24,6 @@ import io.crnk.core.repository.ResourceRepositoryBase;
 import io.crnk.core.resource.list.ResourceList;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.FindOptions;
 
 import java.util.List;
 import java.util.function.Supplier;

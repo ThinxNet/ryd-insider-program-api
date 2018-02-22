@@ -27,6 +27,8 @@ import io.crnk.core.engine.http.HttpRequestContextAware;
 import io.crnk.core.engine.http.HttpRequestContextProvider;
 import io.crnk.core.module.SimpleModule;
 import java.util.Objects;
+import java.util.function.Supplier;
+
 import org.mongodb.morphia.Datastore;
 
 public final class InsiderModule extends SimpleModule implements HttpRequestContextAware {
@@ -63,42 +65,16 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
         context.setResponse(403, "No token");
       }
     });
-    this.addRepository(
-      new UserRepository(
-        this.dsInsider,
-        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
-      )
-    );
-    this.addRepository(
-      new ThingRepository(
-        this.dsInsider,
-        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
-      )
-    );
-    this.addRepository(
-      new DeviceRepository(
-        this.dsInsider,
-        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
-      )
-    );
-    this.addRepository(
-      new AccountRepository(
-        this.dsInsider,
-        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
-      )
-    );
-    this.addRepository(
-      new SessionSummaryRepository(
-        this.dsInsider, this.dsSession,
-        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
-      )
-    );
-    this.addRepository(
-      new SessionSegmentRepository(
-        this.dsInsider, this.dsSession,
-        () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
-      )
-    );
+
+    final Supplier<User> userSupplier = () -> ((User) this.reqContextProvider
+      .getRequestContext().getRequestAttribute("user"));
+
+    this.addRepository(new UserRepository(this.dsInsider, userSupplier));
+    this.addRepository(new ThingRepository(this.dsInsider, userSupplier));
+    this.addRepository(new DeviceRepository(this.dsInsider, userSupplier));
+    this.addRepository(new AccountRepository(this.dsInsider, userSupplier));
+    this.addRepository(new SessionSummaryRepository(this.dsInsider, this.dsSession, userSupplier));
+    this.addRepository(new SessionSegmentRepository(this.dsInsider, this.dsSession, userSupplier));
 
     super.setupModule(ctx);
   }

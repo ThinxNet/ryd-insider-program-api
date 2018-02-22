@@ -20,6 +20,7 @@ import de.tanktaler.insider.model.thing.Thing;
 import de.tanktaler.insider.model.user.User;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.repository.ResourceRepositoryBase;
+import io.crnk.core.resource.list.DefaultResourceList;
 import io.crnk.core.resource.list.ResourceList;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
@@ -44,10 +45,19 @@ public final class ThingRepository extends ResourceRepositoryBase<Thing, ObjectI
 
   @Override
   public ResourceList<Thing> findAll(final QuerySpec querySpec) {
-    return querySpec.apply(
+    final DefaultResourceList<Thing> list = new DefaultResourceList<>();
+    list.addAll(
       this.datastore.createQuery(Thing.class)
-        .filter("users.id", this.currentUser.get().getId()).asList()
+        .field("users.id").equal(this.currentUser.get().getId()).asList()
     );
+    return list;
+  }
+
+  @Override
+	public Thing findOne(ObjectId id, QuerySpec querySpec) {
+	  return this.datastore.createQuery(Thing.class)
+      .field("users.id").equal(this.currentUser.get().getId())
+      .field("_id").equal(id).get();
   }
 
   @Override
