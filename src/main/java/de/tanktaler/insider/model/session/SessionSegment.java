@@ -23,6 +23,7 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Property;
 import org.mongodb.morphia.annotations.Reference;
 
 import java.time.Instant;
@@ -40,7 +41,8 @@ public final class SessionSegment {
 
   private Instant timestamp;
 
-  private Document attributes;
+  @Property("attributes")
+  private Document props;
 
   private String device;
 
@@ -52,8 +54,8 @@ public final class SessionSegment {
     return this.timestamp;
   }
 
-  public Document getAttributes() {
-    return this.attributes;
+  public Document getProps() {
+    return this.props;
   }
 
   public String getDevice() {

@@ -24,6 +24,7 @@ import io.crnk.core.repository.ResourceRepositoryBase;
 import io.crnk.core.resource.list.ResourceList;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.query.Query;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -56,10 +57,10 @@ public final class SessionSegmentRepository
   public ResourceList<SessionSegment> findAll(final QuerySpec querySpec) {
     final List<Device> devices = this.dsInsider.createQuery(Device.class)
       .filter("account", this.currentUser.get().getAccount()).project("_id", true).asList();
-    return querySpec.apply(
-      this.dsSession.createQuery(SessionSegment.class).field("device")
-        .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet())).fetch()
-    );
+    final Query<SessionSegment> query = this.dsSession
+      .createQuery(SessionSegment.class).field("device")
+      .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet()));
+    return querySpec.apply(query.fetch());
   }
 
   @Override

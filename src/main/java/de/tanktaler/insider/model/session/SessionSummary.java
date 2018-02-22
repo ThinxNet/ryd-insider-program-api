@@ -48,7 +48,7 @@ public class SessionSummary {
   private Document statistics;
 
   @JsonApiRelation
-  @Reference(idOnly = true, lazy = true)
+  @Reference(idOnly = true)
   private List<SessionSegment> segments;
 
   public ObjectId getId() {
