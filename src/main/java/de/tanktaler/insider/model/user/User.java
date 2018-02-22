@@ -17,11 +17,14 @@
 package de.tanktaler.insider.model.user;
 
 import de.tanktaler.insider.model.CustomEntityRelation;
+import de.tanktaler.insider.model.account.Account;
 import io.crnk.core.resource.annotations.JsonApiId;
+import io.crnk.core.resource.annotations.JsonApiRelation;
 import io.crnk.core.resource.annotations.JsonApiResource;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Reference;
 
 import java.util.List;
 
@@ -34,19 +37,27 @@ public final class User {
 
   private String email;
 
+  @JsonApiRelation
+  @Reference(idOnly = true)
+  private Account account;
+
   private List<CustomEntityRelation> things;
 
   private List<UserAuthToken> auth_tokens;
 
   public ObjectId getId() {
-    return id;
+    return this.id;
   }
 
   public String getEmail() {
-    return email;
+    return this.email;
   }
 
   public List<CustomEntityRelation> getThings() {
-    return things;
+    return this.things;
+  }
+
+  public Account getAccount() {
+    return this.account;
   }
 }

@@ -17,39 +17,35 @@
 package de.tanktaler.insider.model.session;
 
 import io.crnk.core.resource.annotations.JsonApiId;
+import io.crnk.core.resource.annotations.JsonApiRelation;
 import io.crnk.core.resource.annotations.JsonApiResource;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
-import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Index;
-import org.mongodb.morphia.annotations.Indexes;
+import org.mongodb.morphia.annotations.Reference;
 
 import java.time.Instant;
 
 @Entity(value = "ip_session_segment", noClassnameStored = true)
-@Indexes(
-  @Index(value = "idx_esn_timestamp", fields = {@Field("esn"), @Field("timestamp")})
-)
 @JsonApiResource(type = "session-segments")
 public final class SessionSegment {
   @Id
   @JsonApiId
   private ObjectId id;
 
-  private String esn;
+  @JsonApiRelation
+  @Reference(idOnly = true, lazy = true)
+  private SessionSummary session;
 
   private Instant timestamp;
 
   private Document attributes;
 
+  private String device;
+
   public ObjectId getId() {
     return this.id;
-  }
-
-  public String getEsn() {
-    return this.esn;
   }
 
   public Instant getTimestamp() {
@@ -58,5 +54,13 @@ public final class SessionSegment {
 
   public Document getAttributes() {
     return this.attributes;
+  }
+
+  public String getDevice() {
+    return this.device;
+  }
+
+  public SessionSummary getSession() {
+    return this.session;
   }
 }

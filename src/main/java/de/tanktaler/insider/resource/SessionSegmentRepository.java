@@ -16,6 +16,7 @@
 
 package de.tanktaler.insider.resource;
 
+import de.tanktaler.insider.model.device.Device;
 import de.tanktaler.insider.model.session.SessionSegment;
 import de.tanktaler.insider.model.user.User;
 import io.crnk.core.queryspec.QuerySpec;
@@ -24,29 +25,40 @@ import io.crnk.core.resource.list.ResourceList;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 
+import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class SessionSegmentRepository
   extends ResourceRepositoryBase<SessionSegment, ObjectId> {
-  private final Datastore datastore;
+  private final Datastore dsInsider;
+  private final Datastore dsSession;
   private final Supplier<User> currentUser;
 
-  public SessionSegmentRepository(final Datastore datastore, final Supplier<User> currentUser) {
+  public SessionSegmentRepository(
+    final Datastore dsInsider,
+    final Datastore dsSession,
+    final Supplier<User> currentUser
+  ) {
     super(SessionSegment.class);
-    this.datastore = datastore;
+    this.dsInsider = dsInsider;
+    this.dsSession = dsSession;
     this.currentUser = currentUser;
   }
 
   @Override
   public <S extends SessionSegment> S save(final S segment) {
-    this.datastore.save(segment);
+    this.dsSession.save(segment);
     return segment;
   }
 
   @Override
   public ResourceList<SessionSegment> findAll(final QuerySpec querySpec) {
+    final List<Device> devices = this.dsInsider.createQuery(Device.class)
+      .filter("account", this.currentUser.get().getAccount()).project("_id", true).asList();
     return querySpec.apply(
-      this.datastore.createQuery(SessionSegment.class).field("esn").equal("4532313244").fetch()
+      this.dsSession.createQuery(SessionSegment.class).field("device")
+        .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet())).fetch()
     );
   }
 

@@ -16,6 +16,7 @@
 
 package de.tanktaler.insider.model.device;
 
+import de.tanktaler.insider.model.account.Account;
 import de.tanktaler.insider.model.thing.Thing;
 import io.crnk.core.resource.annotations.JsonApiId;
 import io.crnk.core.resource.annotations.JsonApiRelation;
@@ -23,6 +24,7 @@ import io.crnk.core.resource.annotations.JsonApiResource;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Property;
 import org.mongodb.morphia.annotations.Reference;
 
 @Entity(value = "devices", noClassnameStored = true)
@@ -34,25 +36,34 @@ public final class Device {
 
   @JsonApiRelation
   @Reference(idOnly = true)
+  private Account account;
+
+  @JsonApiRelation
+  @Reference(idOnly = true)
   private Thing thing;
 
-  private String sn;
+  @Property("sn")
+  private String serialNumber;
 
   private Boolean pluggedIn;
 
   public ObjectId getId() {
-    return id;
+    return this.id;
   }
 
   public Thing getThing() {
-    return thing;
-  }
-
-  public String getSn() {
-    return sn;
+    return this.thing;
   }
 
   public Boolean getPluggedIn() {
-    return pluggedIn;
+    return this.pluggedIn;
+  }
+
+  public Account getAccount() {
+    return this.account;
+  }
+
+  public String getSerialNumber() {
+    return this.serialNumber;
   }
 }

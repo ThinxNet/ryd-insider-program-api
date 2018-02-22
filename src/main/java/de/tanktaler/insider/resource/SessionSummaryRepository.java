@@ -16,6 +16,7 @@
 
 package de.tanktaler.insider.resource;
 
+import de.tanktaler.insider.model.device.Device;
 import de.tanktaler.insider.model.session.SessionSummary;
 import de.tanktaler.insider.model.user.User;
 import io.crnk.core.queryspec.QuerySpec;
@@ -23,30 +24,42 @@ import io.crnk.core.repository.ResourceRepositoryBase;
 import io.crnk.core.resource.list.ResourceList;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.query.FindOptions;
 
+import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class SessionSummaryRepository
   extends ResourceRepositoryBase<SessionSummary, ObjectId> {
-  private final Datastore datastore;
+  private final Datastore dsInsider;
+  private final Datastore dsSession;
   private final Supplier<User> currentUser;
 
-  public SessionSummaryRepository(final Datastore datastore, final Supplier<User> currentUser) {
+  public SessionSummaryRepository(
+    final Datastore dsInsider,
+    final Datastore dsSession,
+    final Supplier<User> currentUser
+  ) {
     super(SessionSummary.class);
-    this.datastore = datastore;
+    this.dsInsider = dsInsider;
+    this.dsSession = dsSession;
     this.currentUser = currentUser;
   }
 
   @Override
   public <S extends SessionSummary> S save(final S summary) {
-    this.datastore.save(summary);
+    this.dsSession.save(summary);
     return summary;
   }
 
   @Override
   public ResourceList<SessionSummary> findAll(final QuerySpec querySpec) {
+    final List<Device> devices = this.dsInsider.createQuery(Device.class)
+      .filter("account", this.currentUser.get().getAccount()).project("_id", true).asList();
     return querySpec.apply(
-      this.datastore.createQuery(SessionSummary.class).field("esn").equal("4532313244").fetch()
+      this.dsSession.createQuery(SessionSummary.class).field("device")
+        .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet())).fetch()
     );
   }
 

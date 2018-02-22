@@ -89,13 +89,13 @@ public final class InsiderModule extends SimpleModule implements HttpRequestCont
     );
     this.addRepository(
       new SessionSummaryRepository(
-        this.dsSession,
+        this.dsInsider, this.dsSession,
         () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
       )
     );
     this.addRepository(
       new SessionSegmentRepository(
-        this.dsSession,
+        this.dsInsider, this.dsSession,
         () -> ((User) this.reqContextProvider.getRequestContext().getRequestAttribute("user"))
       )
     );

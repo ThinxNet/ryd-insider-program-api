@@ -22,28 +22,22 @@ import io.crnk.core.resource.annotations.JsonApiResource;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
-import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Index;
-import org.mongodb.morphia.annotations.Indexes;
 import org.mongodb.morphia.annotations.Reference;
 
 import java.time.Instant;
 import java.util.List;
 
 @Entity(value = "ip_session_summary", noClassnameStored = true)
-@Indexes(
-  @Index(value = "idx_esn_start_end", fields = {@Field("esn"), @Field("start"), @Field("end")})
-)
 @JsonApiResource(type = "sessions")
-public final class SessionSummary {
+public class SessionSummary {
   @Id
   @JsonApiId
   private ObjectId id;
 
   private Boolean incomplete;
 
-  private String esn;
+  private String device;
 
   private Instant start;
 
@@ -54,38 +48,38 @@ public final class SessionSummary {
   private Document statistics;
 
   @JsonApiRelation
-  @Reference
+  @Reference(idOnly = true, lazy = true)
   private List<SessionSegment> segments;
 
   public ObjectId getId() {
     return id;
   }
 
-  public String getEsn() {
-    return esn;
-  }
-
   public Document getStatistics() {
-    return statistics;
+    return this.statistics;
   }
 
   public Instant getStart() {
-    return start;
+    return this.start;
   }
 
   public Instant getEnd() {
-    return end;
+    return this.end;
   }
 
   public Instant getTimestamp() {
-    return timestamp;
+    return this.timestamp;
   }
 
   public Boolean getIncomplete() {
-    return incomplete;
+    return this.incomplete;
   }
 
   public List<SessionSegment> getSegments() {
-    return segments;
+    return this.segments;
+  }
+
+  public String getDevice() {
+    return this.device;
   }
 }
