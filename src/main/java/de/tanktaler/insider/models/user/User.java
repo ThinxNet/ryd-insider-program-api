@@ -14,37 +14,44 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model.account;
+package de.tanktaler.insider.models.user;
 
-import de.tanktaler.insider.model.CustomEntityRelation;
-import io.crnk.core.resource.annotations.JsonApiId;
-import io.crnk.core.resource.annotations.JsonApiResource;
+import de.tanktaler.insider.models.CustomEntityRelation;
+import de.tanktaler.insider.models.account.Account;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Reference;
 
 import java.util.List;
 
-@Entity(value = "accounts", noClassnameStored = true)
-@JsonApiResource(type = "accounts")
-public final class Account {
+@Entity(value = "users", noClassnameStored = true)
+public class User {
   @Id
-  @JsonApiId
   private ObjectId id;
+
+  private String email;
+
+  @Reference(idOnly = true)
+  private Account account;
 
   private List<CustomEntityRelation> things;
 
-  private List<CustomEntityRelation> users;
+  private List<UserAuthToken> auth_tokens;
 
   public ObjectId getId() {
-    return id;
+    return this.id;
+  }
+
+  public String getEmail() {
+    return this.email;
   }
 
   public List<CustomEntityRelation> getThings() {
-    return things;
+    return this.things;
   }
 
-  public List<CustomEntityRelation> getUsers() {
-    return users;
+  public Account getAccount() {
+    return this.account;
   }
 }

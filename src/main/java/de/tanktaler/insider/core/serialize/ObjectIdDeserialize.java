@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model.account;
+package de.tanktaler.insider.core.serialize;
 
-public enum AccountRole {
-  ACCOUNT_OWNER
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import org.bson.types.ObjectId;
+
+import java.io.IOException;
+
+public final class ObjectIdDeserialize extends JsonDeserializer<ObjectId> {
+  @Override
+  public ObjectId deserialize(final JsonParser parser, final DeserializationContext ctx)
+    throws IOException {
+    return parser.hasCurrentToken() ? new ObjectId(parser.getValueAsString()) : null;
+  }
 }

@@ -6,8 +6,7 @@ plugins {
 ext {
   versions = [
     checkstyle: '8.8',
-    crnk: '2.5.20180215232038',
-    dropwizard: '1.3.0-rc6',
+    dropwizard: '1.3.0-rc7',
     gradle: '4.5.1',
     mongo: '3.6.2',
     morphia: '1.3.2'
@@ -37,8 +36,6 @@ dependencies {
   implementation group: 'org.mongodb', name: 'mongo-java-driver', version: versions.mongo
   implementation group: 'io.dropwizard', name: 'dropwizard-core', version: versions.dropwizard
   implementation group: 'io.dropwizard', name: 'dropwizard-auth', version: versions.dropwizard
-  implementation group: 'io.crnk', name: 'crnk-security', version: versions.crnk
-  implementation group: 'io.crnk', name: 'crnk-rs', version: versions.crnk
 }
 
 checkstyle {

@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model.device;
+package de.tanktaler.insider.models.device;
 
-import de.tanktaler.insider.model.account.Account;
-import de.tanktaler.insider.model.thing.Thing;
-import io.crnk.core.resource.annotations.JsonApiId;
-import io.crnk.core.resource.annotations.JsonApiRelation;
-import io.crnk.core.resource.annotations.JsonApiResource;
+import de.tanktaler.insider.models.account.Account;
+import de.tanktaler.insider.models.thing.Thing;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
@@ -28,17 +25,13 @@ import org.mongodb.morphia.annotations.Property;
 import org.mongodb.morphia.annotations.Reference;
 
 @Entity(value = "devices", noClassnameStored = true)
-@JsonApiResource(type = "devices")
-public final class Device {
+public class Device {
   @Id
-  @JsonApiId
   private ObjectId id;
 
-  @JsonApiRelation
   @Reference(idOnly = true)
   private Account account;
 
-  @JsonApiRelation
   @Reference(idOnly = true)
   private Thing thing;
 

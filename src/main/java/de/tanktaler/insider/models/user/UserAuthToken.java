@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model;
+package de.tanktaler.insider.models.user;
 
-public final class CustomEntityRelation {
-  private String id;
-  private String role;
-  private String type;
+public final class UserAuthToken {
+  private String token;
 
-  public String getId() {
-    return id;
+  public String getToken() {
+    return token;
   }
 
-  public String getRole() {
-    return role;
-  }
-
-  public String getType() {
-    return type;
+  public void setToken(final String token) {
+    this.token = token;
   }
 }

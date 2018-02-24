@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model.thing;
+package de.tanktaler.insider.models.thing;
 
 public final class ThingYmme {
   private String color;
@@ -27,34 +27,34 @@ public final class ThingYmme {
   private String year;
 
   public String getColor() {
-    return color;
+    return this.color;
   }
 
   public String getFuelType() {
-    return fuelType;
+    return this.fuelType;
   }
 
   public String getMake() {
-    return make;
+    return this.make;
   }
 
   public String getModel() {
-    return model;
+    return this.model;
   }
 
   public String getModelType() {
-    return modelType;
+    return this.modelType;
   }
 
   public String getVehicleId() {
-    return vehicleId;
+    return this.vehicleId;
   }
 
   public String getVIN() {
-    return VIN;
+    return this.VIN;
   }
 
   public String getYear() {
-    return year;
+    return this.year;
   }
 }

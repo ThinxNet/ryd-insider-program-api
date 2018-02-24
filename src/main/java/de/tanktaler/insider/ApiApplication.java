@@ -18,14 +18,23 @@ package de.tanktaler.insider;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import de.tanktaler.insider.core.auth.InsiderTokenAuthenticator;
+import de.tanktaler.insider.core.auth.InsiderTokenAuthFilter;
+import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
 import de.tanktaler.insider.core.MongoHealthCheck;
 import de.tanktaler.insider.core.MongoManaged;
-import de.tanktaler.insider.crnk.InsiderModule;
-import io.crnk.rs.CrnkFeature;
+import de.tanktaler.insider.core.module.InsiderModule;
+import de.tanktaler.insider.resources.AccountResource;
+import de.tanktaler.insider.resources.DeviceResource;
+import de.tanktaler.insider.resources.ThingResource;
+import de.tanktaler.insider.resources.UserResource;
 import io.dropwizard.Application;
+import io.dropwizard.auth.AuthDynamicFeature;
+import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 
@@ -40,7 +49,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
 
   @Override
   public void initialize(final Bootstrap<ApiConfiguration> bootstrap) {
-
+    bootstrap.getObjectMapper().registerModule(new InsiderModule());
   }
 
   @Override
@@ -54,6 +63,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
       "Authorization,X-Requested-With,X-Txn-Auth-Token,Content-Type,Accept,Origin"
     );
     filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "*");
+
 
     // @todo! move these to a bundle
     final Morphia morphia = new Morphia();
@@ -74,10 +84,21 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.healthChecks().register("mongoInsider", new MongoHealthCheck(dsInsider));
     environment.healthChecks().register("mongoSession", new MongoHealthCheck(dsSession));
 
-    final CrnkFeature crnk = new CrnkFeature();
-    crnk.getBoot().addModule(new InsiderModule(dsInsider, dsSession));
+    environment.jersey().register(
+      new AuthDynamicFeature(
+        new InsiderTokenAuthFilter<>(
+          new InsiderTokenAuthenticator(dsInsider)
+        )
+      )
+    );
 
-    environment.jersey().register(crnk);
+    environment.jersey().register(RolesAllowedDynamicFeature.class);
+    environment.jersey().register(new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class));
+
+    environment.jersey().register(new AccountResource(dsInsider));
+    environment.jersey().register(new DeviceResource(dsInsider));
+    environment.jersey().register(new ThingResource(dsInsider));
+    environment.jersey().register(new UserResource(dsInsider));
   }
 
   @Override

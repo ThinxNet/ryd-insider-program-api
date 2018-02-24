@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model.session;
+package de.tanktaler.insider.models.session;
 
-import io.crnk.core.resource.annotations.JsonApiId;
-import io.crnk.core.resource.annotations.JsonApiRelation;
-import io.crnk.core.resource.annotations.JsonApiResource;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
@@ -29,13 +26,10 @@ import org.mongodb.morphia.annotations.Reference;
 import java.time.Instant;
 
 @Entity(value = "ip_session_segment", noClassnameStored = true)
-@JsonApiResource(type = "session-segments")
 public final class SessionSegment {
   @Id
-  @JsonApiId
   private ObjectId id;
 
-  @JsonApiRelation
   @Reference(idOnly = true, lazy = true)
   private SessionSummary session;
 

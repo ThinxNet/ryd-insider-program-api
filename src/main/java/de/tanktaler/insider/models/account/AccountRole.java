@@ -14,16 +14,8 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.model.user;
+package de.tanktaler.insider.models.account;
 
-public final class UserAuthToken {
-  private String token;
-
-  public String getToken() {
-    return token;
-  }
-
-  public void setToken(final String token) {
-    this.token = token;
-  }
+public enum AccountRole {
+  ACCOUNT_OWNER
 }
