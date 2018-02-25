@@ -16,27 +16,24 @@
 
 package de.tanktaler.insider.models.session;
 
+import de.tanktaler.insider.models.Model;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Property;
-import org.mongodb.morphia.annotations.Reference;
 
 import java.time.Instant;
 
 @Entity(value = "ip_session_segment", noClassnameStored = true)
-public final class SessionSegment {
+public final class SessionSegment implements Model {
   @Id
   private ObjectId id;
 
-  @Reference(idOnly = true, lazy = true)
-  private SessionSummary session;
+  private ObjectId session;
 
   private Instant timestamp;
 
-  @Property("attributes")
-  private Document props;
+  private Document attributes;
 
   private String device;
 
@@ -48,15 +45,15 @@ public final class SessionSegment {
     return this.timestamp;
   }
 
-  public Document getProps() {
-    return this.props;
+  public Document getAttributes() {
+    return this.attributes;
   }
 
   public String getDevice() {
     return this.device;
   }
 
-  public SessionSummary getSession() {
+  public ObjectId getSession() {
     return this.session;
   }
 }

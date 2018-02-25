@@ -16,24 +16,5 @@
 
 package de.tanktaler.insider.models;
 
-import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Embedded;
-
-@Embedded
-public final class CustomEntityRelation {
-  private ObjectId id;
-  private String role;
-  private String type;
-
-  public ObjectId getId() {
-    return this.id;
-  }
-
-  public String getRole() {
-    return this.role;
-  }
-
-  public String getType() {
-    return this.type;
-  }
+public interface Model {
 }

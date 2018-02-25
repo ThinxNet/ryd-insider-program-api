@@ -26,6 +26,7 @@ import de.tanktaler.insider.core.MongoManaged;
 import de.tanktaler.insider.core.module.InsiderModule;
 import de.tanktaler.insider.resources.AccountResource;
 import de.tanktaler.insider.resources.DeviceResource;
+import de.tanktaler.insider.resources.SessionResource;
 import de.tanktaler.insider.resources.ThingResource;
 import de.tanktaler.insider.resources.UserResource;
 import io.dropwizard.Application;
@@ -34,6 +35,7 @@ import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
@@ -64,11 +66,17 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     );
     filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "*");
 
+    final Morphia morphia = new Morphia();
+    morphia.mapPackage("de.tanktaler.insider.models");
+
+    environment.jersey().register(new AbstractBinder() {
+      @Override
+      protected void configure() {
+        bind(morphia).to(Morphia.class);
+      }
+    });
 
     // @todo! move these to a bundle
-    final Morphia morphia = new Morphia();
-    morphia.mapPackage("de.tanktaler.insider.resources");
-
     final MongoClientURI dsInsiderUri = configuration.getDbInsider().getUri();
     final MongoClientURI dsSessionUri = configuration.getDbSession().getUri();
 
@@ -97,6 +105,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
 
     environment.jersey().register(new AccountResource(dsInsider));
     environment.jersey().register(new DeviceResource(dsInsider));
+    environment.jersey().register(new SessionResource(dsInsider, dsSession));
     environment.jersey().register(new ThingResource(dsInsider));
     environment.jersey().register(new UserResource(dsInsider));
   }

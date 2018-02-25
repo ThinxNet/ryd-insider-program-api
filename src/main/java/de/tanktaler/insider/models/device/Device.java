@@ -16,24 +16,20 @@
 
 package de.tanktaler.insider.models.device;
 
-import de.tanktaler.insider.models.account.Account;
-import de.tanktaler.insider.models.thing.Thing;
+import de.tanktaler.insider.models.Model;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Property;
-import org.mongodb.morphia.annotations.Reference;
 
 @Entity(value = "devices", noClassnameStored = true)
-public class Device {
+public class Device implements Model {
   @Id
   private ObjectId id;
 
-  @Reference(idOnly = true)
-  private Account account;
+  private ObjectId account;
 
-  @Reference(idOnly = true)
-  private Thing thing;
+  private ObjectId thing;
 
   @Property("sn")
   private String serialNumber;
@@ -44,16 +40,16 @@ public class Device {
     return this.id;
   }
 
-  public Thing getThing() {
-    return this.thing;
-  }
-
   public Boolean getPluggedIn() {
     return this.pluggedIn;
   }
 
-  public Account getAccount() {
+  public ObjectId getAccount() {
     return this.account;
+  }
+
+  public ObjectId getThing() {
+    return this.thing;
   }
 
   public String getSerialNumber() {

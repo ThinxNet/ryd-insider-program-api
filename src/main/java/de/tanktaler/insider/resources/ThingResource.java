@@ -17,18 +17,21 @@
 package de.tanktaler.insider.resources;
 
 import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
+import de.tanktaler.insider.core.response.InsiderEnvelop;
 import de.tanktaler.insider.models.thing.Thing;
 import io.dropwizard.auth.Auth;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.Morphia;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
+import javax.ws.rs.core.Response;
 
 @Path("/things")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -36,13 +39,15 @@ import java.util.List;
 public final class ThingResource {
   private final Datastore datastore;
 
+  @Inject
+  private Morphia morphia;
+
   public ThingResource(final Datastore datastore) {
     this.datastore = datastore;
   }
 
   @GET
   @Path("/{id}")
-  @Produces(MediaType.APPLICATION_JSON)
   public Thing fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id
@@ -53,8 +58,14 @@ public final class ThingResource {
   }
 
   @GET
-  public List<Thing> fetchAll(@Auth final InsiderAuthPrincipal user) {
-    return this.datastore.createQuery(Thing.class)
-      .field("users.id").equal(user.entity().getId()).asList();
+  public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
+    return Response
+      .ok(new InsiderEnvelop(
+        this.datastore.createQuery(Thing.class)
+          .field("users.id").equal(user.entity().getId())
+          .asList().stream().map(this.morphia::toDBObject).toArray()
+        )
+      )
+      .build();
   }
 }

@@ -16,17 +16,17 @@
 
 package de.tanktaler.insider.models.session;
 
+import de.tanktaler.insider.models.Model;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Reference;
 
 import java.time.Instant;
 import java.util.List;
 
 @Entity(value = "ip_session_summary", noClassnameStored = true)
-public class SessionSummary {
+public class SessionSummary implements Model {
   @Id
   private ObjectId id;
 
@@ -42,8 +42,7 @@ public class SessionSummary {
 
   private Document statistics;
 
-  @Reference(idOnly = true)
-  private List<SessionSegment> segments;
+  private List<ObjectId> segments;
 
   public ObjectId getId() {
     return id;
@@ -69,7 +68,7 @@ public class SessionSummary {
     return this.incomplete;
   }
 
-  public List<SessionSegment> getSegments() {
+  public List<ObjectId> getSegments() {
     return this.segments;
   }
 

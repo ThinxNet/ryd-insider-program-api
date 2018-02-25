@@ -17,19 +17,23 @@
 package de.tanktaler.insider.models.account;
 
 import de.tanktaler.insider.models.CustomEntityRelation;
+import de.tanktaler.insider.models.Model;
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 
 import java.util.List;
 
 @Entity(value = "accounts", noClassnameStored = true)
-public class Account {
+public class Account implements Model {
   @Id
   private ObjectId id;
 
+  @Embedded
   private List<CustomEntityRelation> things;
 
+  @Embedded
   private List<CustomEntityRelation> users;
 
   public ObjectId getId() {

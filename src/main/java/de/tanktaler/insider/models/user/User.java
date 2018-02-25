@@ -17,24 +17,24 @@
 package de.tanktaler.insider.models.user;
 
 import de.tanktaler.insider.models.CustomEntityRelation;
-import de.tanktaler.insider.models.account.Account;
+import de.tanktaler.insider.models.Model;
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Reference;
 
 import java.util.List;
 
 @Entity(value = "users", noClassnameStored = true)
-public class User {
+public class User implements Model {
   @Id
   private ObjectId id;
 
   private String email;
 
-  @Reference(idOnly = true)
-  private Account account;
+  private ObjectId account;
 
+  @Embedded
   private List<CustomEntityRelation> things;
 
   private List<UserAuthToken> auth_tokens;
@@ -51,7 +51,7 @@ public class User {
     return this.things;
   }
 
-  public Account getAccount() {
+  public ObjectId getAccount() {
     return this.account;
   }
 }

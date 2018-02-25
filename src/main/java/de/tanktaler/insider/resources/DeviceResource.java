@@ -17,18 +17,21 @@
 package de.tanktaler.insider.resources;
 
 import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
+import de.tanktaler.insider.core.response.InsiderEnvelop;
 import de.tanktaler.insider.models.device.Device;
 import io.dropwizard.auth.Auth;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.Morphia;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
+import javax.ws.rs.core.Response;
 import java.util.stream.Collectors;
 
 @Path("/devices")
@@ -41,34 +44,28 @@ public final class DeviceResource {
     this.datastore = datastore;
   }
 
+  @Inject
+  private Morphia morphia;
+
   @GET
   @Path("/{id}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Device fetchOne(
+  public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id
   ) {
-    return this.datastore.get(Device.class, id);
+    return Response.ok(new InsiderEnvelop(
+      this.morphia.toDBObject(this.datastore.get(Device.class, id))
+    )).build();
   }
 
   @GET
-  public List<Device> fetchAll(@Auth final InsiderAuthPrincipal user) {
-    return this.datastore.createQuery(Device.class).field("thing").in(
-      user.entity().getThings().stream().map(e -> e.getId()).collect(Collectors.toSet())
-    ).asList();
+  public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
+    return Response.ok(
+      new InsiderEnvelop(
+        this.datastore.createQuery(Device.class).field("thing").in(
+          user.entity().getThings().stream().map(e -> e.getId()).collect(Collectors.toSet())
+        ).asList().stream().map(this.morphia::toDBObject).toArray()
+      )
+    ).build();
   }
-
-  /*final List<Device> devices = this.dsInsider.createQuery(Device.class)
-      .filter("account", this.currentUser.get().getAccount()).project("_id", true).asList();
-    final Query<SessionSegment> query = this.dsSession
-      .createQuery(SessionSegment.class).field("device")
-      .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet()));
-    return querySpec.apply(query.fetch());*/
-
-    /*final List<Device> devices = this.dsInsider.createQuery(Device.class)
-      .filter("account", this.currentUser.get().getAccount()).project("_id", true).asList();
-    return querySpec.apply(
-      this.dsSession.createQuery(SessionSummary.class).field("device")
-        .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet())).fetch()
-    );*/
 }

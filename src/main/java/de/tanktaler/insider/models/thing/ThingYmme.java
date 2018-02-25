@@ -16,6 +16,9 @@
 
 package de.tanktaler.insider.models.thing;
 
+import org.mongodb.morphia.annotations.Embedded;
+
+@Embedded
 public final class ThingYmme {
   private String color;
   private String fuelType;

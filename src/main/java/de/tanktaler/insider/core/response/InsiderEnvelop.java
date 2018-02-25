@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-package de.tanktaler.insider.models;
+package de.tanktaler.insider.core.response;
 
-import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Embedded;
+import com.mongodb.BasicDBObject;
 
-@Embedded
-public final class CustomEntityRelation {
-  private ObjectId id;
-  private String role;
-  private String type;
-
-  public ObjectId getId() {
-    return this.id;
-  }
-
-  public String getRole() {
-    return this.role;
-  }
-
-  public String getType() {
-    return this.type;
+public class InsiderEnvelop extends BasicDBObject {
+  public InsiderEnvelop(final Object obj) {
+    super("data", obj);
   }
 }

@@ -42,7 +42,6 @@ public final class UserResource {
 
   @GET
   @Path("/{id}")
-  @Produces(MediaType.APPLICATION_JSON)
   public User fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id

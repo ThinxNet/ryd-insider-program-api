@@ -16,27 +16,30 @@
 
 package de.tanktaler.insider.models.thing;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import de.tanktaler.insider.core.serialize.ObjectIdDeserialize;
-import de.tanktaler.insider.core.serialize.ObjectIdSerialize;
 import de.tanktaler.insider.models.CustomEntityRelation;
+import de.tanktaler.insider.models.Model;
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 
 import java.util.List;
 
 @Entity(value = "things", noClassnameStored = true)
-public class Thing {
+public class Thing implements Model {
   @Id
-  @JsonSerialize(using = ObjectIdSerialize.class)
   private ObjectId id;
 
+  @Embedded
   private List<CustomEntityRelation> users;
+
   private ObjectId account;
+
   private ObjectId device;
+
   private String nickName;
+
+  @Embedded
   private ThingYmme ymme;
 
   public ObjectId getId() {
