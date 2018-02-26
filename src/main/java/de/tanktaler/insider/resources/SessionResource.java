@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.Sort;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -100,6 +101,7 @@ public final class SessionResource {
         new InsiderEnvelop(
           this.dsSession.createQuery(SessionSummary.class).field("device")
             .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet()))
+            .order(Sort.descending("end"))
             .asList().stream().map(this.morphia::toDBObject).toArray()
         )
       )
