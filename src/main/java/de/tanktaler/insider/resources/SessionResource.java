@@ -73,7 +73,7 @@ public final class SessionResource {
       return Response.status(Response.Status.NOT_FOUND).build();
     }
 
-    final DBObject result = morphia.toDBObject(session);
+    final DBObject result = this.morphia.toDBObject(session);
     final List<ObjectId> segments = ((List<ObjectId>) result.get("segments"));
     final Query<SessionSegment> query = this.dsSession.createQuery(SessionSegment.class);
 
@@ -84,7 +84,7 @@ public final class SessionResource {
 
     final BasicDBList projectedSegments = new BasicDBList();
     for (final Object segmentId: segments) {
-      projectedSegments.add(morphia.toDBObject(query.cloneQuery().field("_id").equal(segmentId).get()));
+      projectedSegments.add(this.morphia.toDBObject(query.cloneQuery().field("_id").equal(segmentId).get()));
     }
 
     result.put("segments", projectedSegments);

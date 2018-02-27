@@ -27,6 +27,7 @@ import de.tanktaler.insider.core.module.InsiderModule;
 import de.tanktaler.insider.resources.AccountResource;
 import de.tanktaler.insider.resources.DeviceResource;
 import de.tanktaler.insider.resources.SessionResource;
+import de.tanktaler.insider.resources.StatisticsResource;
 import de.tanktaler.insider.resources.ThingResource;
 import de.tanktaler.insider.resources.UserResource;
 import io.dropwizard.Application;
@@ -106,6 +107,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.jersey().register(new AccountResource(dsInsider));
     environment.jersey().register(new DeviceResource(dsInsider));
     environment.jersey().register(new SessionResource(dsInsider, dsSession));
+    environment.jersey().register(new StatisticsResource(dsInsider, dsSession));
     environment.jersey().register(new ThingResource(dsInsider));
     environment.jersey().register(new UserResource(dsInsider));
   }
