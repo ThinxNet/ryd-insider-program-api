@@ -40,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Iterator;
 import java.util.Objects;
+import org.mongodb.morphia.query.Sort;
 
 @Path("/statistics")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -74,8 +75,9 @@ public final class StatisticsResource {
       .match(
         this.dsInsider.createQuery(SessionSummary.class).field("device").equal(thing.getDevice())
       )
+      .sort(Sort.descending("end"))
       .group(
-        Group.grouping("_id", Accumulator.accumulator("$dayOfMonth", "end")),
+        Group.grouping("_id", Accumulator.accumulator("$dayOfYear", "end")),
         Group.grouping("gpsDriveDurationS", Group.sum("statistics.gpsDriveDurationS")),
         Group.grouping("gpsStayDurationS", Group.sum("statistics.gpsStayDurationS")),
         Group.grouping("obdDriveDurationS", Group.sum("statistics.obdDriveDurationS")),
@@ -83,6 +85,7 @@ public final class StatisticsResource {
         Group.grouping("geoDriveDurationS", Group.sum("statistics.geoDriveDurationS")),
         Group.grouping("geoStayDurationS", Group.sum("statistics.geoStayDurationS"))
       )
+      .limit(7)
       .aggregate(StandstillDto.class)
       .forEachRemaining(result::add);
 

@@ -20,7 +20,7 @@ import org.mongodb.morphia.annotations.Id;
 
 public final class StandstillDto {
   @Id
-  public Integer dayOfMonth;
+  public Integer dayOfYear;
   public Integer geoDriveDurationS;
   public Integer geoStayDurationS;
   public Integer gpsDriveDurationS;
