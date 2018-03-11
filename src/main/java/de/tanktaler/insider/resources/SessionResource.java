@@ -16,7 +16,11 @@
 
 package de.tanktaler.insider.resources;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
 import de.tanktaler.insider.core.response.InsiderEnvelop;
@@ -24,6 +28,9 @@ import de.tanktaler.insider.models.device.Device;
 import de.tanktaler.insider.models.session.SessionSegment;
 import de.tanktaler.insider.models.session.SessionSummary;
 import io.dropwizard.auth.Auth;
+import java.util.ArrayList;
+import java.util.stream.StreamSupport;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
@@ -33,10 +40,12 @@ import org.mongodb.morphia.query.Sort;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -90,6 +99,78 @@ public final class SessionResource {
     result.put("segments", projectedSegments);
 
     return Response.ok(new InsiderEnvelop(result)).build();
+  }
+
+  @GET
+  @Path("/{id}/locations")
+  public Response fetchOne(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id,
+    @DefaultValue("gps") @QueryParam("source") final String source
+  ) {
+    final JsonNodeFactory json = JsonNodeFactory.instance;
+    final Query<SessionSegment> query = this.dsSession
+      .createQuery(SessionSegment.class).field("session").equal(id);
+
+    switch (source) {
+      case "gps": {
+        final List<SessionSegment> segments = query
+          .field("attributes.latitude").exists()
+          .project("attributes.latitude", true)
+          .project("attributes.longitude", true)
+          .asList();
+
+        final ArrayNode locations = json.arrayNode(segments.size() + 1);
+        segments.forEach(segment ->
+          locations.add(
+            json.objectNode()
+              .putNull("street")
+              .set(
+                "coordinate",
+                json.arrayNode(2)
+                  .add(segment.getAttributes().getDouble("longitude"))
+                  .add(segment.getAttributes().getDouble("latitude"))
+              )
+          )
+        );
+        return Response.ok(new InsiderEnvelop(locations)).build();
+      }
+
+      case "map-match": {
+        final List<SessionSegment> segments = query
+          .field("enhancements.mapMatches").exists()
+          .field("enhancements.mapMatches").not().sizeEq(0)
+          .project("enhancements.mapMatches", true)
+          .asList();
+
+        final ArrayNode locations = json.arrayNode(segments.size() + 1);
+
+        segments.forEach(segment ->
+          segment.getEnhancements().getMapMatches().forEach(match ->
+            match.getCoordinates().forEach(
+              coordinate -> locations.add(
+                json.objectNode()
+                  .put(
+                    "street",
+                    match.getTraces().stream()
+                      .filter(trace ->
+                        !trace.getStreet().isEmpty()
+                        && Arrays.equals(trace.getLocation(), coordinate)
+                      )
+                      .map(e -> e.getStreet())
+                      .findFirst().orElse(null)
+                  )
+                  .set("coordinate", json.arrayNode(2).add(coordinate[0]).add(coordinate[1]))
+              )
+            )
+          )
+        );
+        return Response.ok(new InsiderEnvelop(locations)).build();
+      }
+
+      default:
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }
   }
 
   @GET

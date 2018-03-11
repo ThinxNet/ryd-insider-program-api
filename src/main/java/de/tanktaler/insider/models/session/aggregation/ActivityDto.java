@@ -18,7 +18,7 @@ package de.tanktaler.insider.models.session.aggregation;
 
 import org.mongodb.morphia.annotations.Id;
 
-public final class StandstillDto {
+public final class ActivityDto {
   @Id
   public Integer dayOfYear;
   public Integer geoDriveDurationS;

@@ -68,6 +68,8 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "*");
 
     final Morphia morphia = new Morphia();
+    morphia.getMapper().getOptions().setStoreEmpties(true);
+    morphia.getMapper().getOptions().setStoreNulls(true);
     morphia.mapPackage("de.tanktaler.insider.models");
 
     environment.jersey().register(new AbstractBinder() {

@@ -17,11 +17,10 @@
 package de.tanktaler.insider.resources;
 
 import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
 import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
 import de.tanktaler.insider.core.response.InsiderEnvelop;
 import de.tanktaler.insider.models.session.SessionSummary;
-import de.tanktaler.insider.models.session.aggregation.StandstillDto;
+import de.tanktaler.insider.models.session.aggregation.ActivityDto;
 import de.tanktaler.insider.models.thing.Thing;
 import io.dropwizard.auth.Auth;
 import org.bson.types.ObjectId;
@@ -38,7 +37,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Iterator;
+
 import java.util.Objects;
 import org.mongodb.morphia.query.Sort;
 
@@ -59,7 +58,7 @@ public final class StatisticsResource {
   }
 
   @GET
-  @Path("/{id}/standstill")
+  @Path("/{id}/activity")
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id
@@ -86,7 +85,7 @@ public final class StatisticsResource {
         Group.grouping("geoStayDurationS", Group.sum("statistics.geoStayDurationS"))
       )
       .limit(7)
-      .aggregate(StandstillDto.class)
+      .aggregate(ActivityDto.class)
       .forEachRemaining(result::add);
 
     return Response.ok(new InsiderEnvelop(result)).build();

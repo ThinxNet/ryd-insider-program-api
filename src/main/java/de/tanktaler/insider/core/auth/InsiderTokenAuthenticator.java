@@ -23,7 +23,8 @@ import org.mongodb.morphia.Datastore;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class InsiderTokenAuthenticator implements Authenticator<String, InsiderAuthPrincipal> {
+public final class InsiderTokenAuthenticator
+  implements Authenticator<String, InsiderAuthPrincipal> {
   private final Datastore datastore;
 
   public InsiderTokenAuthenticator(final Datastore datastore) {

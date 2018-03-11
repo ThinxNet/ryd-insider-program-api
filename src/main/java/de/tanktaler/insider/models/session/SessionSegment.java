@@ -17,15 +17,17 @@
 package de.tanktaler.insider.models.session;
 
 import de.tanktaler.insider.models.Model;
+import de.tanktaler.insider.models.session.embedded.SessionSegmentEnhancements;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 
 import java.time.Instant;
 
 @Entity(value = "ip_session_segment", noClassnameStored = true)
-public final class SessionSegment implements Model {
+public class SessionSegment implements Model {
   @Id
   private ObjectId id;
 
@@ -33,7 +35,11 @@ public final class SessionSegment implements Model {
 
   private Instant timestamp;
 
+  @Embedded
   private Document attributes;
+
+  @Embedded
+  private SessionSegmentEnhancements enhancements;
 
   private String device;
 
@@ -55,5 +61,9 @@ public final class SessionSegment implements Model {
 
   public ObjectId getSession() {
     return this.session;
+  }
+
+  public SessionSegmentEnhancements getEnhancements() {
+    return this.enhancements;
   }
 }
