@@ -17,8 +17,8 @@
 package de.tanktaler.insider.models.session;
 
 import de.tanktaler.insider.models.Model;
+import de.tanktaler.insider.models.session.embedded.SessionSegmentAttributes;
 import de.tanktaler.insider.models.session.embedded.SessionSegmentEnhancements;
-import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
@@ -36,7 +36,7 @@ public class SessionSegment implements Model {
   private Instant timestamp;
 
   @Embedded
-  private Document attributes;
+  private SessionSegmentAttributes attributes;
 
   @Embedded
   private SessionSegmentEnhancements enhancements;
@@ -51,16 +51,16 @@ public class SessionSegment implements Model {
     return this.timestamp;
   }
 
-  public Document getAttributes() {
-    return this.attributes;
-  }
-
   public String getDevice() {
     return this.device;
   }
 
   public ObjectId getSession() {
     return this.session;
+  }
+
+  public SessionSegmentAttributes getAttributes() {
+    return this.attributes;
   }
 
   public SessionSegmentEnhancements getEnhancements() {

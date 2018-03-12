@@ -19,15 +19,15 @@ package de.tanktaler.insider.models.session.embedded;
 import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded
-public final class EnhancementMapMatchTrace {
-  private Double[] location;
-  private String street;
+public final class SessionSegmentAttributes {
+  private Double latitude;
+  private Double longitude;
 
-  public Double[] getLocation() {
-    return this.location;
+  public Double getLatitude() {
+    return this.latitude;
   }
 
-  public String getStreet() {
-    return this.street;
+  public Double getLongitude() {
+    return this.longitude;
   }
 }

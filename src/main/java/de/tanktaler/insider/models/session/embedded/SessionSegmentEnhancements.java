@@ -16,23 +16,36 @@
 
 package de.tanktaler.insider.models.session.embedded;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.bson.Document;
 import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded
-public class SessionSegmentEnhancements {
+public final class SessionSegmentEnhancements {
   @Embedded
   private Document weather;
 
   @Embedded
-  private List<EnhancementMapMatch> mapMatches;
+  private List<EnhancementMapMatch> mapMatches = new ArrayList<>();
 
   public Document getWeather() {
     return this.weather;
   }
 
+  public void setWeather(final Document doc) {
+    this.weather = doc;
+  }
+
   public List<EnhancementMapMatch> getMapMatches() {
     return this.mapMatches;
+  }
+
+  public void setMapMatches(final List<EnhancementMapMatch> matches) {
+    this.mapMatches = matches;
+  }
+
+  public void addToMapMatches(final EnhancementMapMatch obj) {
+    this.mapMatches.add(obj);
   }
 }
