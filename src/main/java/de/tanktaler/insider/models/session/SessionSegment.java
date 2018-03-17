@@ -41,7 +41,7 @@ public class SessionSegment implements Model {
   @Embedded
   private SessionSegmentEnhancements enhancements;
 
-  private String device;
+  private ObjectId device;
 
   public ObjectId getId() {
     return this.id;
@@ -51,7 +51,7 @@ public class SessionSegment implements Model {
     return this.timestamp;
   }
 
-  public String getDevice() {
+  public ObjectId getDevice() {
     return this.device;
   }
 

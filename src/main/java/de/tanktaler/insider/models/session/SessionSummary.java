@@ -32,7 +32,7 @@ public class SessionSummary implements Model {
 
   private Boolean incomplete;
 
-  private String device;
+  private ObjectId device;
 
   private Instant start;
 
@@ -72,7 +72,7 @@ public class SessionSummary implements Model {
     return this.segments;
   }
 
-  public String getDevice() {
+  public ObjectId getDevice() {
     return this.device;
   }
 }
