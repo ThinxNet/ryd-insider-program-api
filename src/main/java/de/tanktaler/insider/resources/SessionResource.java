@@ -18,22 +18,15 @@ package de.tanktaler.insider.resources;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.google.common.collect.Iterables;
 import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.mongodb.client.model.Accumulators;
-import com.mongodb.client.model.Projections;
 import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
 import de.tanktaler.insider.core.response.InsiderEnvelop;
 import de.tanktaler.insider.models.device.Device;
 import de.tanktaler.insider.models.session.SessionSegment;
 import de.tanktaler.insider.models.session.SessionSummary;
-import de.tanktaler.insider.models.session.aggregation.ActivityDto;
 import de.tanktaler.insider.models.session.aggregation.SessionAlikeDto;
 import io.dropwizard.auth.Auth;
-import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 import org.apache.commons.math3.util.Precision;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
@@ -82,7 +75,7 @@ public final class SessionResource {
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
-    @Context HttpServletRequest httpRequest
+    @Context final HttpServletRequest httpRequest
   ) {
     final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
     if (Objects.isNull(session)) {
@@ -100,7 +93,9 @@ public final class SessionResource {
 
     final BasicDBList projectedSegments = new BasicDBList();
     for (final Object segmentId: segments) {
-      projectedSegments.add(this.morphia.toDBObject(query.cloneQuery().field("_id").equal(segmentId).get()));
+      projectedSegments.add(
+        this.morphia.toDBObject(query.cloneQuery().field("_id").equal(segmentId).get())
+      );
     }
 
     result.put("segments", projectedSegments);
