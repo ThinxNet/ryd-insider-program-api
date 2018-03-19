@@ -18,11 +18,11 @@ package de.tanktaler.insider;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
-import de.tanktaler.insider.core.auth.InsiderTokenAuthenticator;
-import de.tanktaler.insider.core.auth.InsiderTokenAuthFilter;
-import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
 import de.tanktaler.insider.core.MongoHealthCheck;
 import de.tanktaler.insider.core.MongoManaged;
+import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
+import de.tanktaler.insider.core.auth.InsiderTokenAuthFilter;
+import de.tanktaler.insider.core.auth.InsiderTokenAuthenticator;
 import de.tanktaler.insider.core.module.InsiderModule;
 import de.tanktaler.insider.resources.AccountResource;
 import de.tanktaler.insider.resources.DeviceResource;
@@ -35,15 +35,14 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
-
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import java.util.EnumSet;
 
 public final class ApiApplication extends Application<ApiConfiguration> {
   public static void main(final String[] args) throws Exception {
@@ -104,8 +103,9 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     );
 
     environment.jersey().register(RolesAllowedDynamicFeature.class);
-    environment.jersey().register(new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class));
-
+    environment.jersey().register(
+      new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class)
+    );
     environment.jersey().register(new AccountResource(dsInsider));
     environment.jersey().register(new DeviceResource(dsInsider));
     environment.jersey().register(new SessionResource(dsInsider, dsSession));

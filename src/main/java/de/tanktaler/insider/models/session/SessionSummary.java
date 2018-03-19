@@ -17,13 +17,12 @@
 package de.tanktaler.insider.models.session;
 
 import de.tanktaler.insider.models.Model;
+import java.time.Instant;
+import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
-
-import java.time.Instant;
-import java.util.List;
 
 @Entity(value = "ip_session_summary", noClassnameStored = true)
 public class SessionSummary implements Model {

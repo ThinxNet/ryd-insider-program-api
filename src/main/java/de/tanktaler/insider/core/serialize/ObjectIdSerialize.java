@@ -19,10 +19,9 @@ package de.tanktaler.insider.core.serialize;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import org.bson.types.ObjectId;
-
 import java.io.IOException;
 import java.util.Objects;
+import org.bson.types.ObjectId;
 
 public final class ObjectIdSerialize extends JsonSerializer<ObjectId> {
   @Override

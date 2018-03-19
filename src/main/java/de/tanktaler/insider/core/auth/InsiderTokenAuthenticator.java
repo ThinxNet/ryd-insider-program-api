@@ -18,10 +18,9 @@ package de.tanktaler.insider.core.auth;
 
 import de.tanktaler.insider.models.user.User;
 import io.dropwizard.auth.Authenticator;
-import org.mongodb.morphia.Datastore;
-
 import java.util.Objects;
 import java.util.Optional;
+import org.mongodb.morphia.Datastore;
 
 public final class InsiderTokenAuthenticator
   implements Authenticator<String, InsiderAuthPrincipal> {
@@ -32,7 +31,7 @@ public final class InsiderTokenAuthenticator
   }
 
   @Override
-  public Optional<InsiderAuthPrincipal> authenticate(String token) {
+  public Optional<InsiderAuthPrincipal> authenticate(final String token) {
     final User user = this.datastore.createQuery(User.class)
       .filter("auth_tokens.token", token).get();
     return Objects.isNull(user) ? Optional.empty() : Optional.of(new InsiderAuthPrincipal(user));

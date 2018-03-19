@@ -27,16 +27,10 @@ import de.tanktaler.insider.models.session.SessionSegment;
 import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.SessionAlikeDto;
 import io.dropwizard.auth.Auth;
-import org.apache.commons.math3.util.Precision;
-import org.bson.types.ObjectId;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.Morphia;
-import org.mongodb.morphia.aggregation.Accumulator;
-import org.mongodb.morphia.aggregation.Group;
-import org.mongodb.morphia.aggregation.Projection;
-import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.Sort;
-
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -49,10 +43,15 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import org.apache.commons.math3.util.Precision;
+import org.bson.types.ObjectId;
+import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.Morphia;
+import org.mongodb.morphia.aggregation.Accumulator;
+import org.mongodb.morphia.aggregation.Group;
+import org.mongodb.morphia.aggregation.Projection;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.Sort;
 
 @Path("/sessions")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -182,66 +181,66 @@ public final class SessionResource {
     @PathParam("id") final ObjectId id,
     @DefaultValue("90") @QueryParam("confidence") final Integer confidence
   ) {
-      final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
-      if (Objects.isNull(session)) {
-        return Response.status(Response.Status.NOT_FOUND).build();
-      }
+    final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
+    if (Objects.isNull(session)) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
 
-      final List<SessionSegment> segments = this.dsSession
-        .get(SessionSegment.class, session.getSegments())
-        .field("enhancements.mapMatches.confidence").exists()
-        .project("enhancements.mapMatches", true)
-        .asList();
+    final List<SessionSegment> segments = this.dsSession
+      .get(SessionSegment.class, session.getSegments())
+      .field("enhancements.mapMatches.confidence").exists()
+      .project("enhancements.mapMatches", true)
+      .asList();
 
-      final List<Long> nodes = segments.stream()
-        .flatMap(segment -> segment.getEnhancements().getMapMatches().stream())
-        .flatMap(mapMatch -> mapMatch.getLegs().stream())
-        .flatMap(leg -> leg.getAnnotation().getNodes().stream())
-        .distinct()
-        .collect(Collectors.toList());
+    final List<Long> nodes = segments.stream()
+      .flatMap(segment -> segment.getEnhancements().getMapMatches().stream())
+      .flatMap(mapMatch -> mapMatch.getLegs().stream())
+      .flatMap(leg -> leg.getAnnotation().getNodes().stream())
+      .distinct()
+      .collect(Collectors.toList());
 
-      final BasicDBList result = new BasicDBList();
+    final BasicDBList result = new BasicDBList();
 
-      this.dsSession.createAggregation(SessionSegment.class)
-        .match(
-          this.dsInsider.createQuery(SessionSegment.class)
-            .field("session").notEqual(session.getId())
-            .field("device").equal(session.getDevice())
-            .field("enhancements.mapMatches.confidence").exists()
-        )
-        .unwind("enhancements.mapMatches")
-        .unwind("enhancements.mapMatches.legs")
-        .project(
-          Projection.projection("session"),
-          Projection.projection("nodes", "enhancements.mapMatches.legs.annotation.nodes")
-        )
-        .unwind("nodes")
-        .group(
-          Group.grouping("_id", "session"),
-          Group.grouping("nodes", Accumulator.accumulator("$addToSet", "nodes"))
-        )
-        .project(
+    this.dsSession.createAggregation(SessionSegment.class)
+      .match(
+        this.dsInsider.createQuery(SessionSegment.class)
+          .field("session").notEqual(session.getId())
+          .field("device").equal(session.getDevice())
+          .field("enhancements.mapMatches.confidence").exists()
+      )
+      .unwind("enhancements.mapMatches")
+      .unwind("enhancements.mapMatches.legs")
+      .project(
+        Projection.projection("session"),
+        Projection.projection("nodes", "enhancements.mapMatches.legs.annotation.nodes")
+      )
+      .unwind("nodes")
+      .group(
+        Group.grouping("_id", "session"),
+        Group.grouping("nodes", Accumulator.accumulator("$addToSet", "nodes"))
+      )
+      .project(
+        Projection.projection(
+          "intersection",
           Projection.projection(
-            "intersection",
-            Projection.projection(
-              "$size",
-              Projection.expression("$setIntersection", "$nodes", nodes)
-            )
+            "$size",
+            Projection.expression("$setIntersection", "$nodes", nodes)
           )
         )
-        .match(
-          this.dsInsider.createQuery(SessionAlikeDto.class).field("intersection").greaterThan(
-            Math.min(confidence < 40 ? 40 : confidence, 100) * (nodes.size() * 0.01)
-          )
+      )
+      .match(
+        this.dsInsider.createQuery(SessionAlikeDto.class).field("intersection").greaterThan(
+          Math.min(confidence < 40 ? 40 : confidence, 100) * (nodes.size() * 0.01)
         )
-        .sort(Sort.descending("intersection"))
-        .aggregate(SessionAlikeDto.class)
-        .forEachRemaining(entry -> {
-          entry.confidence = Precision.round(entry.intersection / (nodes.size() * 0.01), 1);
-          result.add(entry);
-        });
+      )
+      .sort(Sort.descending("intersection"))
+      .aggregate(SessionAlikeDto.class)
+      .forEachRemaining(entry -> {
+        entry.confidence = Precision.round(entry.intersection / (nodes.size() * 0.01), 1);
+        result.add(entry);
+      });
 
-      return Response.ok(new InsiderEnvelop(result)).build();
+    return Response.ok(new InsiderEnvelop(result)).build();
   }
 
   @GET

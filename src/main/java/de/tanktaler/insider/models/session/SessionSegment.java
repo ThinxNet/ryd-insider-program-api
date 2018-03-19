@@ -19,12 +19,11 @@ package de.tanktaler.insider.models.session;
 import de.tanktaler.insider.models.Model;
 import de.tanktaler.insider.models.session.embedded.SessionSegmentAttributes;
 import de.tanktaler.insider.models.session.embedded.SessionSegmentEnhancements;
+import java.time.Instant;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
-
-import java.time.Instant;
 
 @Entity(value = "ip_session_segment", noClassnameStored = true)
 public class SessionSegment implements Model {

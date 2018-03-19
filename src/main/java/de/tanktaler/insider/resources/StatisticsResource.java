@@ -23,12 +23,7 @@ import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.ActivityDto;
 import de.tanktaler.insider.models.thing.Thing;
 import io.dropwizard.auth.Auth;
-import org.bson.types.ObjectId;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.Morphia;
-import org.mongodb.morphia.aggregation.Accumulator;
-import org.mongodb.morphia.aggregation.Group;
-
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -37,8 +32,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import java.util.Objects;
+import org.bson.types.ObjectId;
+import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.Morphia;
+import org.mongodb.morphia.aggregation.Accumulator;
+import org.mongodb.morphia.aggregation.Group;
 import org.mongodb.morphia.query.Sort;
 
 @Path("/statistics")

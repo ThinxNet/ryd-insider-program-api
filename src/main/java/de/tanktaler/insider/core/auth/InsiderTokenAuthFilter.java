@@ -18,23 +18,20 @@ package de.tanktaler.insider.core.auth;
 
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.Authenticator;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
 import java.io.IOException;
 import java.security.Principal;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
 
 public final class InsiderTokenAuthFilter<P extends Principal> extends AuthFilter<String, P> {
-  public InsiderTokenAuthFilter(
-    final Authenticator<String, P> authenticator
-    // final Authorizer<P> authorizer
-  ) {
+  // final Authorizer<P> authorizer
+  public InsiderTokenAuthFilter(final Authenticator<String, P> authenticator) {
     super.authenticator = authenticator;
     //this.authorizer = authorizer;
   }
 
   @Override
-  public void filter(ContainerRequestContext requestContext) throws IOException {
+  public void filter(final ContainerRequestContext requestContext) throws IOException {
     final String token = requestContext.getHeaderString("x-txn-auth-token");
     if (!this.authenticate(requestContext, token, "token")) {
       throw new WebApplicationException(unauthorizedHandler.buildResponse("CHANGE", "ME"));

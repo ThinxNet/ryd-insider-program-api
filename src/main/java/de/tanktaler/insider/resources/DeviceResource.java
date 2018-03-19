@@ -20,10 +20,7 @@ import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
 import de.tanktaler.insider.core.response.InsiderEnvelop;
 import de.tanktaler.insider.models.device.Device;
 import io.dropwizard.auth.Auth;
-import org.bson.types.ObjectId;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.Morphia;
-
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -32,7 +29,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.stream.Collectors;
+import org.bson.types.ObjectId;
+import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.Morphia;
 
 @Path("/devices")
 @Consumes(MediaType.APPLICATION_JSON)

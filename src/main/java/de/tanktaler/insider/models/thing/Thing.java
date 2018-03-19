@@ -18,12 +18,11 @@ package de.tanktaler.insider.models.thing;
 
 import de.tanktaler.insider.models.CustomEntityRelation;
 import de.tanktaler.insider.models.Model;
+import java.util.List;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
-
-import java.util.List;
 
 @Entity(value = "things", noClassnameStored = true)
 public class Thing implements Model {

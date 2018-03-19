@@ -23,7 +23,7 @@ import org.bson.types.ObjectId;
 
 public final class InsiderModule extends SimpleModule {
   @Override
-  public void setupModule(SetupContext context) {
+  public void setupModule(final SetupContext context) {
     this.addSerializer(ObjectId.class, new ObjectIdSerialize());
     this.addDeserializer(ObjectId.class, new ObjectIdDeserialize());
     super.setupModule(context);
