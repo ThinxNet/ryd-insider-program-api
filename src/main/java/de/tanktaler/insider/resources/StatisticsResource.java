@@ -82,6 +82,7 @@ public final class StatisticsResource {
         Group.grouping("geoDriveDurationS", Group.sum("statistics.geoDriveDurationS")),
         Group.grouping("geoStayDurationS", Group.sum("statistics.geoStayDurationS"))
       )
+      .sort(Sort.descending("_id"))
       .limit(7)
       .aggregate(ActivityDto.class)
       .forEachRemaining(result::add);
