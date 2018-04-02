@@ -17,9 +17,10 @@
 package de.tanktaler.insider.models.session;
 
 import de.tanktaler.insider.models.Model;
+import de.tanktaler.insider.models.session.embedded.SegmentTypedEnvelope;
 import de.tanktaler.insider.models.session.embedded.SessionSegmentAttributes;
-import de.tanktaler.insider.models.session.embedded.SessionSegmentEnhancements;
 import java.time.Instant;
+import java.util.List;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
@@ -38,7 +39,10 @@ public class SessionSegment implements Model {
   private SessionSegmentAttributes attributes;
 
   @Embedded
-  private SessionSegmentEnhancements enhancements;
+  private List<SegmentTypedEnvelope> enhancements;
+
+  @Embedded
+  private List<SegmentTypedEnvelope> events;
 
   private ObjectId device;
 
@@ -62,7 +66,11 @@ public class SessionSegment implements Model {
     return this.attributes;
   }
 
-  public SessionSegmentEnhancements getEnhancements() {
+  public List<SegmentTypedEnvelope> getEnhancements() {
     return this.enhancements;
+  }
+
+  public List<SegmentTypedEnvelope> getEvents() {
+    return this.events;
   }
 }

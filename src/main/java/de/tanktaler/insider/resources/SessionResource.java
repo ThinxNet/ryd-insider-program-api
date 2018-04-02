@@ -26,6 +26,7 @@ import de.tanktaler.insider.models.device.Device;
 import de.tanktaler.insider.models.session.SessionSegment;
 import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.SessionAlikeDto;
+import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapMatch;
 import io.dropwizard.auth.Auth;
 import java.util.Arrays;
 import java.util.List;
@@ -139,31 +140,32 @@ public final class SessionResource {
 
       case "map": {
         final List<SessionSegment> segments = query
-          .field("enhancements.mapMatches").exists()
-          .field("enhancements.mapMatches").not().sizeEq(0)
-          .project("enhancements.mapMatches", true)
+          .field("enhancements.type").equal("MAP_MATCH")
+          .project("enhancements", true)
           .asList();
 
         final ArrayNode locations = json.arrayNode(segments.size() + 1);
 
         segments.forEach(segment ->
-          segment.getEnhancements().getMapMatches().forEach(match ->
-            match.getCoordinates().forEach(
-              coordinate -> locations.add(
-                json.objectNode()
-                  .put(
-                    "street",
-                    match.getTraces().stream()
-                      .filter(trace ->
-                        !trace.getStreet().isEmpty()
-                        && Arrays.equals(trace.getLocation(), coordinate)
-                      )
-                      .map(e -> e.getStreet())
-                      .findFirst().orElse(null)
-                  )
-                  .set("coordinate", json.arrayNode(2).add(coordinate[0]).add(coordinate[1]))
+          segment.getEnhancements().stream()
+            .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
+            .map(EnvelopeMapMatch::new).forEach(enhancement ->
+              enhancement.payload().coordinates().forEach(
+                coordinate -> locations.add(
+                  json.objectNode()
+                    .put(
+                      "street",
+                      enhancement.payload().traces().stream()
+                        .filter(trace ->
+                          !trace.street().isEmpty()
+                          && Arrays.equals(trace.location(), coordinate)
+                        )
+                        .map(e -> e.street())
+                        .findFirst().orElse(null)
+                    )
+                    .set("coordinate", json.arrayNode(2).add(coordinate[0]).add(coordinate[1]))
+                )
               )
-            )
           )
         );
         return Response.ok(new InsiderEnvelop(locations)).build();
@@ -174,7 +176,7 @@ public final class SessionResource {
     }
   }
 
-  @GET
+  /*@GET
   @Path("/{id}/alike")
   public Response findAlike(
     @Auth final InsiderAuthPrincipal user,
@@ -241,7 +243,7 @@ public final class SessionResource {
       });
 
     return Response.ok(new InsiderEnvelop(result)).build();
-  }
+  }*/
 
   @GET
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
