@@ -241,7 +241,8 @@ public final class SessionResource {
       )
       .match(
         this.dsInsider.createQuery(SessionAlikeDto.class).field("intersection").greaterThan(
-          Math.min(confidence < 40 ? 40 : confidence, 100) * (nodes.size() * 0.01)
+          Math.min(confidence.intValue() < 40 ? 40 : confidence.intValue(), 100)
+          * (nodes.size() * 0.01)
         )
       )
       .sort(Sort.descending("intersection"))
