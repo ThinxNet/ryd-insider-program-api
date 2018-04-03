@@ -16,30 +16,44 @@
 
 package de.tanktaler.insider.models.session.embedded.envelope;
 
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import de.tanktaler.insider.models.session.embedded.SegmentTypedEnvelope;
 import java.time.Instant;
+import java.util.Arrays;
 import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded
 public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
-  private Long[] nodes;
+  private final String type;
+  private final Instant timestamp;
 
-  public Long[] getNodes() {
-    return this.nodes;
+  @Embedded
+  private final Payload payload;
+
+  public EnvelopeMapWay(final String type, final Instant timestamp, final Payload payload) {
+    this.type = type;
+    this.timestamp = timestamp;
+    this.payload = payload;
   }
 
-  @Override
-  public Payload payload() {
-    return null;
-  }
-
-  @Override
-  public Instant timestamp() {
-    return null;
+  public EnvelopeMapWay(final SegmentTypedEnvelope envelope) {
+    this(envelope.type(), envelope.timestamp(), new Payload(envelope.payload()));
   }
 
   @Override
   public String type() {
-    return null;
+    return this.type;
+  }
+
+  @Override
+  public Instant timestamp() {
+    return this.timestamp;
+  }
+
+  @Override
+  public Payload payload() {
+    return this.payload;
   }
 
   @Embedded
@@ -47,17 +61,38 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
     private Long id;
     private Double speed;
     private Long changeset;
+    private Long[] nodes;
 
-    public Long getId() {
+    public Payload(final Long id, final Double speed, final Long changeset, final Long[] nodes) {
+      this.id = id;
+      this.speed = speed;
+      this.changeset = changeset;
+      this.nodes = nodes;
+    }
+
+    public Payload(final BasicDBObject doc) {
+      this(
+        doc.getLong("id"),
+        doc.getDouble("speed"),
+        doc.getLong("changeset"),
+        ((BasicDBList) doc.getOrDefault("nodes", new BasicDBList())).toArray(new Long[0])
+      );
+    }
+
+    public Long id() {
       return this.id;
     }
 
-    public Double getSpeed() {
+    public Double speed() {
       return this.speed;
     }
 
-    public Long getChangeset() {
+    public Long changeset() {
       return this.changeset;
+    }
+
+    public Long[] nodes() {
+      return this.nodes;
     }
   }
 }

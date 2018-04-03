@@ -27,6 +27,7 @@ import de.tanktaler.insider.models.session.SessionSegment;
 import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.SessionAlikeDto;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapMatch;
+import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import io.dropwizard.auth.Auth;
 import java.util.Arrays;
 import java.util.List;
@@ -176,7 +177,7 @@ public final class SessionResource {
     }
   }
 
-  /*@GET
+  @GET
   @Path("/{id}/alike")
   public Response findAlike(
     @Auth final InsiderAuthPrincipal user,
@@ -190,31 +191,39 @@ public final class SessionResource {
 
     final List<SessionSegment> segments = this.dsSession
       .get(SessionSegment.class, session.getSegments())
-      .field("enhancements.mapMatches.confidence").exists()
-      .project("enhancements.mapMatches", true)
+      .field("enhancements.type").equal("MAP_WAY")
+      .project("enhancements", true)
       .asList();
 
     final List<Long> nodes = segments.stream()
-      .flatMap(segment -> segment.getEnhancements().getMapMatches().stream())
-      .flatMap(mapMatch -> mapMatch.getLegs().stream())
-      .flatMap(leg -> leg.getAnnotation().getNodes().stream())
+      .flatMap(segment -> segment.getEnhancements().stream())
+      .filter(enhancement -> enhancement.type().equals("MAP_WAY"))
+      .map(EnvelopeMapWay::new)
+      .flatMap(way -> Arrays.stream(way.payload().nodes()))
       .distinct()
       .collect(Collectors.toList());
 
     final BasicDBList result = new BasicDBList();
+    if (nodes.isEmpty()) {
+      return Response.ok(new InsiderEnvelop(result)).build();
+    }
 
     this.dsSession.createAggregation(SessionSegment.class)
       .match(
         this.dsInsider.createQuery(SessionSegment.class)
           .field("session").notEqual(session.getId())
           .field("device").equal(session.getDevice())
-          .field("enhancements.mapMatches.confidence").exists()
+          .field("enhancements.type").equal("MAP_WAY")
       )
-      .unwind("enhancements.mapMatches")
-      .unwind("enhancements.mapMatches.legs")
+      .unwind("enhancements")
+      .match(
+        this.dsInsider.createQuery(SessionSegment.class)
+          .field("enhancements.type").equal("MAP_WAY")
+      )
+      .unwind("enhancements.payload.nodes")
       .project(
         Projection.projection("session"),
-        Projection.projection("nodes", "enhancements.mapMatches.legs.annotation.nodes")
+        Projection.projection("nodes", "enhancements.payload.nodes")
       )
       .unwind("nodes")
       .group(
@@ -243,7 +252,7 @@ public final class SessionResource {
       });
 
     return Response.ok(new InsiderEnvelop(result)).build();
-  }*/
+  }
 
   @GET
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
