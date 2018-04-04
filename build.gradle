@@ -24,7 +24,7 @@ apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'net.ltgt.errorprone'
 
-mainClassName = 'de.tanktaler.ApiApplication'
+mainClassName = 'de.tanktaler.insider.ApiApplication'
 sourceCompatibility = 1.8
 
 repositories {
@@ -44,6 +44,10 @@ checkstyle {
   configProperties = ['rootDir': rootDir]
   toolVersion = versions.checkstyle
   configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+}
+
+shadowJar {
+  mergeServiceFiles()
 }
 
 task wrapper(type: Wrapper) {

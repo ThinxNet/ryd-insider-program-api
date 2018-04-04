@@ -40,6 +40,12 @@ public final class UserResource {
   }
 
   @GET
+  @Path("/delete_me")
+  public Integer status() {
+    return 1;
+  }
+
+  @GET
   @Path("/{id}")
   public User fetchOne(
     @Auth final InsiderAuthPrincipal user,
