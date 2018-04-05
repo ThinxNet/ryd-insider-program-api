@@ -48,4 +48,4 @@ deploy:
     - script:
       name: starting a new application
       code: |-
-        ssh insider@185.201.144.128 "(cd /opt/insider/tanktaler-insider-program-api && nohup java -jar *.jar server ~/tanktaler-insider-program-api/application.yml >> /tmp/tanktaler-insider-program-api.log 2>&1 </dev/null) &"
+        ssh insider@185.201.144.128 "cd /opt/insider/tanktaler-insider-program-api && exec java -jar *.jar server ~/tanktaler-insider-program-api/application.yml >> /tmp/tanktaler-insider-program-api.log 2>&1 </dev/null &"
