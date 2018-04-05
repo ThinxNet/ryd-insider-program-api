@@ -43,7 +43,7 @@ deploy:
     - script:
       name: killing the application
       code: |-
-        ssh insider@185.201.144.128 "pkill -e -f 'tanktaler-insider-program-api/*.jar server' || true"
+        ssh insider@185.201.144.128 "ps -ef | grep 'tanktaler-insider-program-api' | grep -v grep | awk '{print \$2}' | xargs kill -9 &> /dev/null || true"
 
     - script:
       name: starting a new application
