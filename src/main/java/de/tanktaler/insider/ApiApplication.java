@@ -59,7 +59,10 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     // @todo! remove it
     FilterRegistration.Dynamic filter = environment.servlets()
       .addFilter("CrossOriginFilter", CrossOriginFilter.class);
-    filter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "http://localhost:*");
+    filter.setInitParameter(
+      CrossOriginFilter.ALLOWED_ORIGINS_PARAM,
+      "http://localhost:*,https://insider.thinxcloud-staging.de"
+    );
     filter.setInitParameter(
       CrossOriginFilter.ALLOWED_HEADERS_PARAM,
       "Authorization,X-Requested-With,X-Txn-Auth-Token,Content-Type,Accept,Origin"
