@@ -70,7 +70,9 @@ public final class StatisticsResource {
 
     this.dsSession.createAggregation(SessionSummary.class)
       .match(
-        this.dsInsider.createQuery(SessionSummary.class).field("device").equal(thing.getDevice())
+        this.dsInsider.createQuery(SessionSummary.class)
+          .field("device").equal(thing.getDevice())
+          .field("incomplete").equal(false)
       )
       .sort(Sort.descending("end"))
       .group(

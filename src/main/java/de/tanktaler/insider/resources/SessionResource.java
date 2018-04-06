@@ -264,6 +264,7 @@ public final class SessionResource {
         new InsiderEnvelop(
           this.dsSession.createQuery(SessionSummary.class).field("device")
             .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet()))
+            .field("incomplete").equal(false)
             .order(Sort.descending("end"))
             .asList().stream().map(this.morphia::toDBObject).toArray()
         )
