@@ -12,13 +12,45 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *//*
+ */
 
-package de.tanktaler.insider.models.session.embedded;
+package de.tanktaler.insider.models.session.embedded.envelope;
 
+import de.tanktaler.insider.models.session.embedded.SegmentTypedEnvelope;
+import java.time.Instant;
 import org.bson.Document;
 import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded
-public final class EnvelopeWeather extends Envelope<Document> {}
-*/
+public final class EnvelopeWeather implements Envelope<Document> {
+  private final String type;
+  private final Instant timestamp;
+
+  @Embedded
+  private final Document payload;
+
+  public EnvelopeWeather(final String type, final Instant timestamp, final Document payload) {
+    this.type = type;
+    this.timestamp = timestamp;
+    this.payload = payload;
+  }
+
+  public EnvelopeWeather(final SegmentTypedEnvelope envelope) {
+    this(envelope.type(), envelope.timestamp(), new Document(envelope.payload()));
+  }
+
+  @Override
+  public String type() {
+    return this.type;
+  }
+
+  @Override
+  public Instant timestamp() {
+    return this.timestamp;
+  }
+
+  @Override
+  public Document payload() {
+    return this.payload;
+  }
+}

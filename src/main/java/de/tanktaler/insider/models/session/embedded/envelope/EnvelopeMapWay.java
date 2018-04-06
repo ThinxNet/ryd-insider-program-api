@@ -20,7 +20,6 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import de.tanktaler.insider.models.session.embedded.SegmentTypedEnvelope;
 import java.time.Instant;
-import java.util.Arrays;
 import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded
