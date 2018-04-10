@@ -28,6 +28,7 @@ import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.SessionAlikeDto;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapMatch;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
+import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
 import java.util.Arrays;
 import java.util.List;
@@ -179,7 +180,7 @@ public final class SessionResource {
 
   @GET
   @Path("/{id}/alike")
-  public Response findAlike(
+  public Response alike(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
     @DefaultValue("90") @QueryParam("confidence") final Integer confidence
@@ -253,6 +254,35 @@ public final class SessionResource {
       });
 
     return Response.ok(new InsiderEnvelop(result)).build();
+  }
+
+  @GET
+  @Path("/{id}/weather")
+  public Response weather(
+    @Auth final InsiderAuthPrincipal user, @PathParam("id") final ObjectId id
+  ) {
+    final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
+      .field("session").equal(id)
+      .asList();
+
+    final JsonNodeFactory json = JsonNodeFactory.instance;
+    final ArrayNode results = json.arrayNode(segments.size() + 1);
+
+    segments.stream()
+      .flatMap(segment ->
+        segment.getEnhancements().stream()
+          .filter(enhancement -> enhancement.type().equals("WEATHER"))
+          .map(EnvelopeWeather::new)
+      )
+      .forEach(weather ->
+        results.add(
+          json.objectNode()
+            .put("timestamp", weather.timestamp().toEpochMilli())
+            .putPOJO("payload", weather.payload())
+        )
+      );
+
+    return Response.ok(new InsiderEnvelop(results)).build();
   }
 
   @GET
