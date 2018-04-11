@@ -18,11 +18,13 @@ package de.tanktaler.insider.resources;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.BasicDBList;
 import com.mongodb.DBObject;
 import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
 import de.tanktaler.insider.core.response.InsiderEnvelop;
 import de.tanktaler.insider.models.device.Device;
+import de.tanktaler.insider.models.session.MapWay;
 import de.tanktaler.insider.models.session.SessionSegment;
 import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.SessionAlikeDto;
@@ -103,6 +105,52 @@ public final class SessionResource {
     result.put("segments", projectedSegments);
 
     return Response.ok(new InsiderEnvelop(result)).build();
+  }
+
+  @GET
+  @Path("/{id}/environment")
+  public Response segments(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id,
+    @Context final HttpServletRequest httpRequest
+  ) {
+    final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
+    if (Objects.isNull(session)) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
+      .field("session").equal(id)
+      .field("enhancements.type").equal("MAP_WAY")
+      .project("enhancements", true)
+      .order(Sort.ascending("timestamp"))
+      .asList();
+
+    final JsonNodeFactory json = JsonNodeFactory.instance;
+
+    final List<ObjectNode> ways = segments.parallelStream()
+      .flatMap(segment -> segment.getEnhancements().stream())
+      .filter(segment -> segment.type().equals("MAP_WAY"))
+      .map(EnvelopeMapWay::new)
+      .map(way -> {
+        final ObjectNode node = json.objectNode();
+
+        final MapWay entity = this.dsSession.createQuery(MapWay.class)
+          .field("_id").equal(way.payload().id())
+          .field("changeset").equal(way.payload().changeset())
+          .project("geometry", true)
+          .project("tags", true)
+          .get();
+
+        return Objects.isNull(entity) ? null : node
+          .putPOJO("tags", entity.getTags())
+          .putPOJO("geometry", entity.getGeometry())
+          .put("speed", way.payload().speed());
+      })
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+
+    return Response.ok(new InsiderEnvelop(ways)).build();
   }
 
   @GET
