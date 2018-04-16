@@ -126,26 +126,21 @@ public final class SessionResource {
       .order(Sort.ascending("timestamp"))
       .asList();
 
-    final JsonNodeFactory json = JsonNodeFactory.instance;
-
     final List<ObjectNode> ways = segments.parallelStream()
       .flatMap(segment -> segment.getEnhancements().stream())
       .filter(segment -> segment.type().equals("MAP_WAY"))
       .map(EnvelopeMapWay::new)
       .map(way -> {
-        final ObjectNode node = json.objectNode();
-
         final MapWay entity = this.dsSession.createQuery(MapWay.class)
           .field("_id").equal(way.payload().id())
           .field("changeset").equal(way.payload().changeset())
           .project("geometry", true)
           .project("tags", true)
           .get();
-
-        return Objects.isNull(entity) ? null : node
-          .putPOJO("tags", entity.getTags())
+        return Objects.isNull(entity) ? null : JsonNodeFactory.instance.objectNode()
+          .put("speed", way.payload().speed())
           .putPOJO("geometry", entity.getGeometry())
-          .put("speed", way.payload().speed());
+          .putPOJO("tags", entity.getTags());
       })
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
@@ -350,10 +345,12 @@ public final class SessionResource {
       .build();
   }
 
-  /*final List<Device> devices = this.dsInsider.createQuery(Device.class)
+  /*
+    final List<Device> devices = this.dsInsider.createQuery(Device.class)
       .filter("account", this.currentUser.get().getAccount()).project("_id", true).asList();
     final Query<SessionSegment> query = this.dsSession
       .createQuery(SessionSegment.class).field("device")
       .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet()));
-    return querySpec.apply(query.fetch());*/
+    return querySpec.apply(query.fetch());
+   */
 }
