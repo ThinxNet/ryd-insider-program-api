@@ -16,10 +16,10 @@
 
 package de.tanktaler.insider.models.session;
 
+import com.mongodb.DBObject;
 import de.tanktaler.insider.models.Model;
 import java.time.Instant;
 import java.util.List;
-import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
@@ -39,7 +39,7 @@ public class SessionSummary implements Model {
 
   private Instant timestamp;
 
-  private Document statistics;
+  private DBObject statistics;
 
   private List<ObjectId> segments;
 
@@ -47,7 +47,7 @@ public class SessionSummary implements Model {
     return id;
   }
 
-  public Document getStatistics() {
+  public DBObject getStatistics() {
     return this.statistics;
   }
 
