@@ -87,12 +87,12 @@ public final class SessionResource {
     }
 
     final DBObject result = this.morphia.toDBObject(session);
-    final List<ObjectId> segments = ((List<ObjectId>) result.get("segments"));
+    final List<ObjectId> segments = (List<ObjectId>) result.get("segments");
     final Query<SessionSegment> query = this.dsSession.createQuery(SessionSegment.class);
 
     final String fields = httpRequest.getParameter("fields[segments]");
     if (!Objects.isNull(fields)) {
-      Arrays.stream(fields.split(",")).map(v -> v.trim()).forEach(v -> query.project(v, true));
+      Arrays.stream(fields.split(",")).map(String::trim).forEach(v -> query.project(v, true));
     }
 
     final BasicDBList projectedSegments = new BasicDBList();
@@ -205,7 +205,7 @@ public final class SessionResource {
                           !trace.street().isEmpty()
                           && Arrays.equals(trace.location(), coordinate)
                         )
-                        .map(e -> e.street())
+                        .map(EnvelopeMapMatch.Payload.Trace::street)
                         .findFirst().orElse(null)
                     )
                     .set("coordinate", json.arrayNode(2).add(coordinate[0]).add(coordinate[1]))
@@ -285,8 +285,7 @@ public final class SessionResource {
       )
       .match(
         this.dsInsider.createQuery(SessionAlikeDto.class).field("intersection").greaterThan(
-          Math.min(confidence.intValue() < 40 ? 40 : confidence.intValue(), 100)
-          * (nodes.size() * 0.01)
+          Math.min(confidence < 40 ? 40 : confidence, 100) * (nodes.size() * 0.01)
         )
       )
       .sort(Sort.descending("intersection"))
@@ -329,14 +328,29 @@ public final class SessionResource {
   }
 
   @GET
-  public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
+  public Response fetchAll(
+    @Auth final InsiderAuthPrincipal user,
+    @Context final HttpServletRequest httpRequest
+  ) {
     final List<Device> devices = this.dsInsider.createQuery(Device.class)
       .filter("account", user.entity().getAccount()).project("_id", true).asList();
+
+    Query<SessionSummary> query = this.dsSession.createQuery(SessionSummary.class);
+
+    final String deviceId = httpRequest.getParameter("filter[device]");
+    if (Objects.nonNull(deviceId)
+      && ObjectId.isValid(deviceId)
+      && devices.stream().anyMatch(device -> device.getId().equals(new ObjectId(deviceId)))) {
+      query = query.field("device").equal(new ObjectId(deviceId));
+    } else {
+      query = query.field("device")
+        .in(devices.stream().map(Device::getId).collect(Collectors.toSet()));
+    }
+
     return Response
       .ok(
         new InsiderEnvelop(
-          this.dsSession.createQuery(SessionSummary.class).field("device")
-            .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet()))
+          query
             .field("incomplete").equal(false)
             .order(Sort.descending("end"))
             .asList().stream().map(this.morphia::toDBObject).toArray()
@@ -344,13 +358,4 @@ public final class SessionResource {
       )
       .build();
   }
-
-  /*
-    final List<Device> devices = this.dsInsider.createQuery(Device.class)
-      .filter("account", this.currentUser.get().getAccount()).project("_id", true).asList();
-    final Query<SessionSegment> query = this.dsSession
-      .createQuery(SessionSegment.class).field("device")
-      .in(devices.stream().map(device -> device.getId()).collect(Collectors.toSet()));
-    return querySpec.apply(query.fetch());
-   */
 }
