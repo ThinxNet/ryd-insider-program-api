@@ -59,12 +59,23 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
   public final static class Payload {
     private Long id;
     private Double speed;
+    private Double distance;
+    private Double duration;
     private Long changeset;
     private Long[] nodes;
 
-    public Payload(final Long id, final Double speed, final Long changeset, final Long[] nodes) {
+    public Payload(
+      final Long id,
+      final Double speed,
+      final Double distance,
+      final Double duration,
+      final Long changeset,
+      final Long[] nodes
+    ) {
       this.id = id;
       this.speed = speed;
+      this.distance = distance;
+      this.duration = duration;
       this.changeset = changeset;
       this.nodes = nodes;
     }
@@ -73,6 +84,8 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
       this(
         doc.getLong("id"),
         doc.getDouble("speed"),
+        doc.getDouble("distance"),
+        doc.getDouble("duration"),
         doc.getLong("changeset"),
         ((BasicDBList) doc.getOrDefault("nodes", new BasicDBList())).toArray(new Long[0])
       );
@@ -84,6 +97,14 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
 
     public Double speed() {
       return this.speed;
+    }
+
+    public Double distance() {
+      return this.distance;
+    }
+
+    public Double duration() {
+      return this.duration;
     }
 
     public Long changeset() {

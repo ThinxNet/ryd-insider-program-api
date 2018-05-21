@@ -136,10 +136,14 @@ public final class SessionResource {
           .field("changeset").equal(way.payload().changeset())
           .project("geometry", true)
           .project("tags", true)
+          .project("address", true)
           .get();
         return Objects.isNull(entity) ? null : JsonNodeFactory.instance.objectNode()
           .put("speed", way.payload().speed())
-          .putPOJO("geometry", entity.getGeometry())
+          .put("distance", way.payload().distance())
+          .put("duration", way.payload().duration())
+          .put("timestamp", way.timestamp().toEpochMilli())
+          .putPOJO("address", entity.getAddress())
           .putPOJO("tags", entity.getTags());
       })
       .filter(Objects::nonNull)

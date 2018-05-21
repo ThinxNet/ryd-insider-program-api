@@ -16,6 +16,7 @@
 
 package de.tanktaler.insider.models.session;
 
+import de.tanktaler.insider.models.session.embedded.MapWayAddress;
 import de.tanktaler.insider.models.session.embedded.MapWayTag;
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +37,9 @@ public final class MapWay {
 
   @Embedded
   private List<MapWayTag> tags;
+
+  @Embedded
+  private MapWayAddress address;
 
   private Long changeset;
 
@@ -65,5 +69,9 @@ public final class MapWay {
 
   public Long getChangeset() {
     return this.changeset;
+  }
+
+  public MapWayAddress getAddress() {
+    return this.address;
   }
 }
