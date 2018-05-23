@@ -32,7 +32,7 @@ public final class MapWayAddress {
   private String stateDistrict;
   private String suburb;
   private String town;
-  private String vilage;
+  private String village;
 
   public Integer getPostcode() {
     return this.postcode;
@@ -82,7 +82,7 @@ public final class MapWayAddress {
     return this.town;
   }
 
-  public String getVilage() {
-    return this.vilage;
+  public String getVillage() {
+    return this.village;
   }
 }
