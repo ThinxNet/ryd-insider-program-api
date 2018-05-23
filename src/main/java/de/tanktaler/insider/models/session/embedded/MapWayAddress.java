@@ -25,11 +25,14 @@ public final class MapWayAddress {
   private String cityDistrict;
   private String country;
   private String countryCode;
+  private String county;
   private String neighbourhood;
   private String road;
   private String state;
   private String stateDistrict;
   private String suburb;
+  private String town;
+  private String vilage;
 
   public Integer getPostcode() {
     return this.postcode;
@@ -51,6 +54,10 @@ public final class MapWayAddress {
     return this.countryCode;
   }
 
+  public String getCounty() {
+    return this.county;
+  }
+
   public String getNeighbourhood() {
     return this.neighbourhood;
   }
@@ -69,5 +76,13 @@ public final class MapWayAddress {
 
   public String getSuburb() {
     return this.suburb;
+  }
+
+  public String getTown() {
+    return this.town;
+  }
+
+  public String getVilage() {
+    return this.vilage;
   }
 }
