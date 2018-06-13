@@ -16,10 +16,15 @@
 
 package de.tanktaler.insider.resources;
 
+import com.mongodb.BasicDBList;
 import de.tanktaler.insider.core.auth.InsiderAuthPrincipal;
 import de.tanktaler.insider.core.response.InsiderEnvelop;
 import de.tanktaler.insider.models.device.Device;
+import de.tanktaler.insider.models.session.SessionConfidence;
+import de.tanktaler.insider.models.session.aggregation.DeviceConfidenceDto;
 import io.dropwizard.auth.Auth;
+import io.dropwizard.jersey.caching.CacheControl;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -32,15 +37,19 @@ import javax.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
+import org.mongodb.morphia.aggregation.Group;
 
 @Path("/devices")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class DeviceResource {
-  private final Datastore datastore;
+  // @todo! move it to validators
+  private final Datastore dsInsider;
+  private final Datastore dsSession;
 
-  public DeviceResource(final Datastore datastore) {
-    this.datastore = datastore;
+  public DeviceResource(final Datastore dsInsider, final Datastore dsSession) {
+    this.dsInsider = dsInsider;
+    this.dsSession = dsSession;
   }
 
   @Inject
@@ -53,15 +62,38 @@ public final class DeviceResource {
     @PathParam("id") final ObjectId id
   ) {
     return Response.ok(new InsiderEnvelop(
-      this.morphia.toDBObject(this.datastore.get(Device.class, id))
+      this.morphia.toDBObject(this.dsInsider.get(Device.class, id))
     )).build();
+  }
+
+  @GET
+  @Path("/{id}/confidence")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+  public Response confidence(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id
+  ) {
+    final BasicDBList result = new BasicDBList();
+
+    this.dsSession.createAggregation(SessionConfidence.class)
+      .match(this.dsSession.createQuery(SessionConfidence.class).field("device").equal(id))
+      .group(
+        Group.grouping("_id", "attributes.target"),
+        Group.grouping("confidence", Group.average("attributes.confidence")),
+        Group.grouping("score", Group.average("attributes.score")),
+        Group.grouping("sampleSize", Group.max("attributes.sampleSize"))
+      )
+      .aggregate(DeviceConfidenceDto.class)
+      .forEachRemaining(result::add);
+
+    return Response.ok(new InsiderEnvelop(result)).build();
   }
 
   @GET
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
     return Response.ok(
       new InsiderEnvelop(
-        this.datastore.createQuery(Device.class).field("thing").in(
+        this.dsInsider.createQuery(Device.class).field("thing").in(
           user.entity().getThings().stream().map(e -> e.getId()).collect(Collectors.toSet())
         ).asList().stream().map(this.morphia::toDBObject).toArray()
       )

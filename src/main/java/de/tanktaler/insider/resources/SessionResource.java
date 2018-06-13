@@ -32,9 +32,11 @@ import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapMatch;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
+import io.dropwizard.jersey.caching.CacheControl;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -52,7 +54,6 @@ import org.apache.commons.math3.util.Precision;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
-import org.mongodb.morphia.aggregation.Accumulator;
 import org.mongodb.morphia.aggregation.Group;
 import org.mongodb.morphia.aggregation.Projection;
 import org.mongodb.morphia.query.Query;
@@ -109,6 +110,7 @@ public final class SessionResource {
 
   @GET
   @Path("/{id}/environment")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   public Response segments(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
@@ -154,6 +156,7 @@ public final class SessionResource {
 
   @GET
   @Path("/{id}/locations")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response fetchAllLocations(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
@@ -227,6 +230,7 @@ public final class SessionResource {
 
   @GET
   @Path("/{id}/alike")
+  @CacheControl(maxAge = 15, maxAgeUnit = TimeUnit.MINUTES)
   public Response alike(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
@@ -276,7 +280,7 @@ public final class SessionResource {
       .unwind("nodes")
       .group(
         Group.grouping("_id", "session"),
-        Group.grouping("nodes", Accumulator.accumulator("$addToSet", "nodes"))
+        Group.grouping("nodes", Group.addToSet("nodes"))
       )
       .project(
         Projection.projection(
@@ -304,6 +308,7 @@ public final class SessionResource {
 
   @GET
   @Path("/{id}/weather")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response weather(
     @Auth final InsiderAuthPrincipal user, @PathParam("id") final ObjectId id
   ) {

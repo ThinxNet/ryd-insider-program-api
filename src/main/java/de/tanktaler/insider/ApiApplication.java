@@ -110,7 +110,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
       new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class)
     );
     environment.jersey().register(new AccountResource(dsInsider));
-    environment.jersey().register(new DeviceResource(dsInsider));
+    environment.jersey().register(new DeviceResource(dsInsider, dsSession));
     environment.jersey().register(new SessionResource(dsInsider, dsSession));
     environment.jersey().register(new StatisticsResource(dsInsider, dsSession));
     environment.jersey().register(new ThingResource(dsInsider));
