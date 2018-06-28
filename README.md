@@ -1,4 +1,4 @@
-TankTaler Insider Program
+Ryd.one Insider Program
 =========================
 
 
