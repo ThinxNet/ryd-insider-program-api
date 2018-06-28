@@ -21,10 +21,13 @@ import org.mongodb.morphia.annotations.Id;
 public final class ActivityDto {
   @Id
   public Integer dayOfYear;
+  public Integer geoDistanceM;
   public Integer geoDriveDurationS;
   public Integer geoStayDurationS;
+  public Integer gpsDistanceM;
   public Integer gpsDriveDurationS;
   public Integer gpsStayDurationS;
+  public Integer obdDistanceM;
   public Integer obdDriveDurationS;
   public Integer obdStayDurationS;
 }
