@@ -1,0 +1,51 @@
+box:
+  id: java:8
+  env:
+    GRADLE_USER_HOME: "${WERCKER_CACHE_DIR}"
+
+quality:
+  steps:
+    - script:
+      name: code-style check
+      code: |-
+        ./gradlew --console=plain check
+
+build:
+  steps:
+    - script:
+      name: fat jar
+      code: |-
+        ./gradlew --console=plain shadowJar
+        mv build/libs/*.jar "${WERCKER_OUTPUT_DIR}"
+
+deploy:
+  steps:
+    - install-packages:
+      packages: rsync
+
+    - add-to-known_hosts:
+      fingerprint: de:67:f2:0c:05:04:f0:33:de:b2:eb:d9:1c:d9:a7:d6
+      hostname: 185.201.144.128
+      local: true
+      type: ecdsa
+
+    - add-ssh-key:
+      keyname: SSH_KEY
+      host: 185.201.144.128
+
+    - script:
+      name: sending files
+      code: |-
+        rsync -arz "$WERCKER_SOURCE_DIR/" "insider@185.201.144.128:/opt/insider/tanktaler-insider-program-api_${WERCKER_GIT_COMMIT}"
+        ssh insider@185.201.144.128 "rm -rf /opt/insider/tanktaler-insider-program-api_backup"
+        ssh insider@185.201.144.128 "cd /opt/insider; mv tanktaler-insider-program-api tanktaler-insider-program-api_backup && mv tanktaler-insider-program-api_${WERCKER_GIT_COMMIT} tanktaler-insider-program-api"
+
+    - script:
+      name: killing the application
+      code: |-
+        ssh insider@185.201.144.128 "ps -ef | grep 'tanktaler-insider-program-api' | grep -v grep | awk '{print \$2}' | xargs kill -9 &> /dev/null || true"
+
+    - script:
+      name: starting a new application
+      code: |-
+        ssh insider@185.201.144.128 "cd /opt/insider/tanktaler-insider-program-api && exec java -jar *.jar server ~/tanktaler-insider-program-api/application.yml >> /tmp/tanktaler-insider-program-api.log 2>&1 </dev/null &"

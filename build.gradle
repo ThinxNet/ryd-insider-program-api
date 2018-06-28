@@ -1,0 +1,55 @@
+plugins {
+  id 'com.github.johnrengelman.shadow' version '2.0.4'
+  id 'net.ltgt.errorprone' version '0.0.14'
+}
+
+ext {
+  versions = [
+    checkstyle: '8.10',
+    dropwizard: '1.3.3',
+    gradle: '4.7',
+    math3: '3.6.1',
+    mongo: '3.7.0',
+    morphia: '1.3.2'
+  ]
+}
+
+group 'de.tanktaler.insider'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'application'
+apply plugin: 'checkstyle'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'net.ltgt.errorprone'
+
+mainClassName = 'de.tanktaler.insider.ApiApplication'
+sourceCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+dependencies {
+  implementation group: 'io.dropwizard', name: 'dropwizard-auth', version: versions.dropwizard
+  implementation group: 'io.dropwizard', name: 'dropwizard-core', version: versions.dropwizard
+  implementation group: 'org.apache.commons', name: 'commons-math3', version: versions.math3
+  implementation group: 'org.mongodb', name: 'mongo-java-driver', version: versions.mongo
+  implementation group: 'org.mongodb.morphia', name: 'morphia', version: versions.morphia
+}
+
+checkstyle {
+  configProperties = ['rootDir': rootDir]
+  toolVersion = versions.checkstyle
+  configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+}
+
+shadowJar {
+  mergeServiceFiles()
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = "${versions.gradle}"
+}
