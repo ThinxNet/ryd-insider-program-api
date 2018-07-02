@@ -78,10 +78,10 @@ public final class DeviceResource {
     this.dsSession.createAggregation(SessionConfidence.class)
       .match(this.dsSession.createQuery(SessionConfidence.class).field("device").equal(id))
       .group(
-        Group.grouping("_id", "attributes.target"),
-        Group.grouping("confidence", Group.average("attributes.confidence")),
-        Group.grouping("score", Group.average("attributes.score")),
-        Group.grouping("sampleSize", Group.max("attributes.sampleSize"))
+        Group.grouping("_id", "target"),
+        Group.grouping("confidence", Group.average("confidence")),
+        Group.grouping("score", Group.average("score")),
+        Group.grouping("sampleSize", Group.max("sampleSize"))
       )
       .aggregate(DeviceConfidenceDto.class)
       .forEachRemaining(result::add);
