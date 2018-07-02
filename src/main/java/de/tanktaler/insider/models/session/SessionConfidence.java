@@ -18,70 +18,57 @@ package de.tanktaler.insider.models.session;
 
 import java.time.Instant;
 import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 
 @Entity(value = "ip_session_confidence", noClassnameStored = true)
-public class SessionConfidence {
+public final class SessionConfidence {
   @Id
   private ObjectId id;
 
-  private ObjectId session;
+  private Double confidence;
 
-  private ObjectId device;
+  private Double score;
 
   private Instant timestamp;
 
-  @Embedded
-  private Attributes attributes;
+  private Integer sampleSize;
+
+  private ObjectId device;
+
+  private String source;
+
+  private String target;
 
   public ObjectId getId() {
-    return id;
+    return this.id;
   }
 
-  public ObjectId getSession() {
-    return session;
+  public Double getConfidence() {
+    return this.confidence;
   }
 
-  public ObjectId getDevice() {
-    return device;
+  public Double getScore() {
+    return this.score;
   }
 
   public Instant getTimestamp() {
-    return timestamp;
+    return this.timestamp;
   }
 
-  public Attributes getAttributes() {
-    return attributes;
+  public Integer getSampleSize() {
+    return this.sampleSize;
   }
 
-  @Embedded
-  private static final class Attributes {
-    private Double confidence;
-    private Double score;
-    private Integer sampleSize;
-    private String source;
-    private String target;
+  public ObjectId getDevice() {
+    return this.device;
+  }
 
-    public Double getConfidence() {
-      return confidence;
-    }
+  public String getSource() {
+    return this.source;
+  }
 
-    public Double getScore() {
-      return score;
-    }
-
-    public Integer getSampleSize() {
-      return sampleSize;
-    }
-
-    public String getSource() {
-      return source;
-    }
-
-    public String getTarget() {
-      return target;
-    }
+  public String getTarget() {
+    return this.target;
   }
 }
