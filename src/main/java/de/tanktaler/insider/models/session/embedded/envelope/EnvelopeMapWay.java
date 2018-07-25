@@ -25,15 +25,27 @@ import org.mongodb.morphia.annotations.Embedded;
 @Embedded
 public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
   private final String type;
+
   private final Instant timestamp;
+
+  private final Integer version;
 
   @Embedded
   private final Payload payload;
 
-  public EnvelopeMapWay(final String type, final Instant timestamp, final Payload payload) {
+  public EnvelopeMapWay(
+    final String type, final Instant timestamp, final Integer version, final Payload payload
+  ) {
     this.type = type;
     this.timestamp = timestamp;
+    this.version = version;
     this.payload = payload;
+  }
+
+  public EnvelopeMapWay(
+    final String type, final Instant timestamp, final Payload payload
+  ) {
+    this(type, timestamp, 1, payload);
   }
 
   public EnvelopeMapWay(final SegmentTypedEnvelope envelope) {
@@ -51,43 +63,48 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
   }
 
   @Override
+  public Integer version() {
+    return this.version;
+  }
+
+  @Override
   public Payload payload() {
     return this.payload;
   }
 
   @Embedded
-  public final static class Payload {
-    private Long id;
-    private Double speed;
-    private Double distance;
-    private Double duration;
-    private Long changeset;
-    private Long[] nodes;
+  public static final class Payload {
+    private final Long id;
+    private final Double speedMs;
+    private final Double distanceM;
+    private final Double durationS;
+    private final Long timestamp;
+    private final Long[] matches;
 
     public Payload(
       final Long id,
-      final Double speed,
-      final Double distance,
-      final Double duration,
-      final Long changeset,
-      final Long[] nodes
+      final Double speedMs,
+      final Double distanceM,
+      final Double durationS,
+      final Long timestamp,
+      final Long[] matches
     ) {
       this.id = id;
-      this.speed = speed;
-      this.distance = distance;
-      this.duration = duration;
-      this.changeset = changeset;
-      this.nodes = nodes;
+      this.speedMs = speedMs;
+      this.distanceM = distanceM;
+      this.durationS = durationS;
+      this.timestamp = timestamp;
+      this.matches = matches;
     }
 
     public Payload(final BasicDBObject doc) {
       this(
         doc.getLong("id"),
-        doc.getDouble("speed"),
-        doc.getDouble("distance"),
-        doc.getDouble("duration"),
-        doc.getLong("changeset"),
-        ((BasicDBList) doc.getOrDefault("nodes", new BasicDBList())).toArray(new Long[0])
+        doc.getDouble("speedMs"),
+        doc.getDouble("distanceM"),
+        doc.getDouble("durationS"),
+        doc.getLong("timestamp"),
+        ((BasicDBList) doc.getOrDefault("matches", new BasicDBList())).toArray(new Long[0])
       );
     }
 
@@ -95,24 +112,24 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
       return this.id;
     }
 
-    public Double speed() {
-      return this.speed;
+    public Double speedMs() {
+      return this.speedMs;
     }
 
-    public Double distance() {
-      return this.distance;
+    public Double distanceM() {
+      return this.distanceM;
     }
 
-    public Double duration() {
-      return this.duration;
+    public Double durationS() {
+      return this.durationS;
     }
 
-    public Long changeset() {
-      return this.changeset;
+    public Long timestamp() {
+      return this.timestamp;
     }
 
-    public Long[] nodes() {
-      return this.nodes;
+    public Long[] matches() {
+      return this.matches;
     }
   }
 }

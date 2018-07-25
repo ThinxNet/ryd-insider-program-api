@@ -19,9 +19,8 @@ package de.tanktaler.insider.models.session.embedded.envelope;
 import java.time.Instant;
 
 public interface Envelope<T> {
-  T payload();
-
   Instant timestamp();
-
+  Integer version();
   String type();
+  T payload();
 }

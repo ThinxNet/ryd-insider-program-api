@@ -27,17 +27,27 @@ import org.mongodb.morphia.annotations.Embedded;
 @Embedded
 public final class EnvelopeMapMatch implements Envelope<EnvelopeMapMatch.Payload> {
   private final String type;
+
   private final Instant timestamp;
+
+  private final Integer version;
 
   @Embedded
   private final Payload payload;
 
   public EnvelopeMapMatch(
-    final String type, final Instant timestamp, final Payload payload
+    final String type, final Instant timestamp, final Integer version, final Payload payload
   ) {
     this.type = type;
     this.timestamp = timestamp;
+    this.version = version;
     this.payload = payload;
+  }
+
+  public EnvelopeMapMatch(
+    final String type, final Instant timestamp, final Payload payload
+  ) {
+    this(type, timestamp, 1, payload);
   }
 
   public EnvelopeMapMatch(final SegmentTypedEnvelope envelope) {
@@ -55,53 +65,77 @@ public final class EnvelopeMapMatch implements Envelope<EnvelopeMapMatch.Payload
   }
 
   @Override
+  public Integer version() {
+    return this.version;
+  }
+
+  @Override
   public Payload payload() {
     return this.payload;
   }
 
   @Embedded
-  public final static class Payload {
+  public static final class Payload {
     private final Double confidence;
-    private final Double distance;
-    private final Double duration;
-    private final Double weight;
-    private final Instant lastCoordinateTimestamp;
+
+    private final Double distanceM;
+
+    private final Double durationS;
+
+    private final Double speedMs;
+
+    private final Integer alternatives;
+
     private final List<Double[]> coordinates;
 
     @Embedded
-    private List<Trace> traces;
+    private final Reference reference;
+
+    private final Long[] nodes;
+
+    private final String name;
+
+    private final Integer matchingsIndex;
+
 
     public Payload(
       final Double confidence,
-      final Double distance,
-      final Double duration,
-      final Double weight,
-      final Instant lastCoordinateTimestamp,
+      final Double distanceM,
+      final Double durationS,
+      final Double speedMs,
+      final Integer alternatives,
       final List<Double[]> coordinates,
-      final List<Trace> traces
+      final Long[] nodes,
+      final Reference reference,
+      final String name,
+      final Integer matchingsIndex
     ) {
       this.confidence = confidence;
-      this.distance = distance;
-      this.duration = duration;
-      this.weight = weight;
-      this.lastCoordinateTimestamp = lastCoordinateTimestamp;
+      this.distanceM = distanceM;
+      this.durationS = durationS;
+      this.speedMs = speedMs;
+      this.alternatives = alternatives;
       this.coordinates = coordinates;
-      this.traces = traces;
+      this.nodes = nodes;
+      this.reference = reference;
+      this.name = name;
+      this.matchingsIndex = matchingsIndex;
     }
 
-    public Payload(final BasicDBObject doc) {
+    public Payload(final BasicDBObject obj) {
       this(
-        doc.getDouble("confidence"),
-        doc.getDouble("distance"),
-        doc.getDouble("duration"),
-        doc.getDouble("weight"),
-        doc.getDate("lastCoordinateTimestamp").toInstant(),
-        ((BasicDBList) doc.get("coordinates")).stream()
-          .map(e -> ((BasicDBList) e).toArray(new Double[0]))
+        obj.getDouble("confidence"),
+        obj.getDouble("distanceM"),
+        obj.getDouble("durationS"),
+        obj.getDouble("speedMs"),
+        obj.getInt("alternatives"),
+        ((BasicDBList) obj.get("coordinates")).stream()
+          .map(v -> ((BasicDBList) v).toArray(new Double[2]))
           .collect(Collectors.toList()),
-        ((BasicDBList) doc.get("traces")).stream()
-          .map(e -> new Trace((BasicDBObject) e))
-          .collect(Collectors.toList())
+        ((BasicDBList) obj.get("nodes")).toArray(new Long[0]),
+        new Reference((BasicDBObject) obj.get("reference")),
+        obj.getString("name"),
+        obj.getInt("matchingsIndex")
       );
     }
 
@@ -109,44 +143,56 @@ public final class EnvelopeMapMatch implements Envelope<EnvelopeMapMatch.Payload
       return this.confidence;
     }
 
-    public Double distance() {
-      return this.distance;
+    public Double distanceM() {
+      return this.distanceM;
     }
 
-    public Double duration() {
-      return this.duration;
+    public Double durationS() {
+      return this.durationS;
     }
 
-    public Double weight() {
-      return this.weight;
+    public Double speedMs() {
+      return this.speedMs;
     }
 
-    public Instant lastCoordinateTimestamp() {
-      return this.lastCoordinateTimestamp;
+    public Integer alternatives() {
+      return this.alternatives;
     }
 
     public List<Double[]> coordinates() {
       return this.coordinates;
     }
 
-    public List<Trace> traces() {
-      return this.traces;
+    public Reference reference() {
+      return this.reference;
+    }
+
+    public Long[] nodes() {
+      return this.nodes;
+    }
+
+    public String name() {
+      return this.name;
+    }
+
+    public Integer matchingsIndex() {
+      return this.matchingsIndex;
     }
 
     @Embedded
-    public static final class Trace {
+    public static final class Reference {
       private final Double[] location;
-      private final String street;
+      private final Instant timestamp;
 
-      public Trace(final Double[] location, final String street) {
+      public Reference(final Double[] location, final Instant timestamp) {
         this.location = location;
-        this.street = street;
+        this.timestamp = timestamp;
       }
 
-      public Trace(final BasicDBObject obj) {
+      public Reference(final BasicDBObject obj) {
         this(
-          ((BasicDBList) obj.get("location")).toArray(new Double[0]),
-          obj.getString("street")
+          ((BasicDBList) obj.getOrDefault("location", new BasicDBList())).toArray(new Double[0]),
+          obj.getDate("timestamp").toInstant()
         );
       }
 
@@ -154,8 +200,8 @@ public final class EnvelopeMapMatch implements Envelope<EnvelopeMapMatch.Payload
         return this.location;
       }
 
-      public String street() {
-        return this.street;
+      public Instant timestamp() {
+        return this.timestamp;
       }
     }
   }

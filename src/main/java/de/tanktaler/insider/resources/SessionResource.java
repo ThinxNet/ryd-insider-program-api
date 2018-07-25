@@ -110,7 +110,7 @@ public final class SessionResource {
 
   @GET
   @Path("/{id}/environment")
-  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+  //@CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   public Response segments(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
@@ -135,16 +135,16 @@ public final class SessionResource {
       .map(way -> {
         final MapWay entity = this.dsSession.createQuery(MapWay.class)
           .field("_id").equal(way.payload().id())
-          .field("changeset").equal(way.payload().changeset())
+          .field("timestamp").equal(way.payload().timestamp()) // timestamp of the way
           .project("geometry", true)
           .project("tags", true)
           .project("address", true)
           .get();
         return Objects.isNull(entity) ? null : JsonNodeFactory.instance.objectNode()
-          .put("speed", way.payload().speed())
-          .put("distance", way.payload().distance())
-          .put("duration", way.payload().duration())
-          .put("timestamp", way.timestamp().toEpochMilli())
+          .put("distanceM", way.payload().distanceM())
+          .put("durationS", way.payload().durationS())
+          .put("speedMs", way.payload().speedMs())
+          .put("timestamp", way.timestamp().toEpochMilli()) // timestamp of the entry
           .putPOJO("address", entity.getAddress())
           .putPOJO("tags", entity.getTags());
       })
@@ -156,7 +156,7 @@ public final class SessionResource {
 
   @GET
   @Path("/{id}/locations")
-  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  //@CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response fetchAllLocations(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
@@ -172,18 +172,21 @@ public final class SessionResource {
           .field("attributes.latitude").exists()
           .project("attributes.latitude", true)
           .project("attributes.longitude", true)
+          .order(Sort.ascending("timestamp"))
           .asList();
 
         final ArrayNode locations = json.arrayNode(segments.size() + 1);
         segments.forEach(segment ->
           locations.add(
             json.objectNode()
-              .putNull("street")
+              .putNull("name")
               .set(
-                "coordinate",
-                json.arrayNode(2)
-                  .add(segment.getAttributes().getLongitude())
-                  .add(segment.getAttributes().getLatitude())
+                "coordinates",
+                json.arrayNode().add(
+                  json.arrayNode()
+                    .add(segment.getAttributes().getLongitude())
+                    .add(segment.getAttributes().getLatitude())
+                )
               )
           )
         );
@@ -194,6 +197,7 @@ public final class SessionResource {
         final List<SessionSegment> segments = query
           .field("enhancements.type").equal("MAP_MATCH")
           .project("enhancements", true)
+          .order(Sort.ascending("timestamp"))
           .asList();
 
         final ArrayNode locations = json.arrayNode(segments.size() + 1);
@@ -201,22 +205,17 @@ public final class SessionResource {
         segments.forEach(segment ->
           segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
-            .map(EnvelopeMapMatch::new).forEach(enhancement ->
-              enhancement.payload().coordinates().forEach(
-                coordinate -> locations.add(
-                  json.objectNode()
-                    .put(
-                      "street",
-                      enhancement.payload().traces().stream()
-                        .filter(trace ->
-                          !trace.street().isEmpty()
-                          && Arrays.equals(trace.location(), coordinate)
-                        )
-                        .map(EnvelopeMapMatch.Payload.Trace::street)
-                        .findFirst().orElse(null)
+            .map(EnvelopeMapMatch::new).forEachOrdered(enhancement ->
+              locations.add(
+                json.objectNode()
+                  .put("name", enhancement.payload().name())
+                  .putPOJO("coordinates",
+                    enhancement.payload().coordinates().stream().collect(
+                      json::arrayNode,
+                      (k, v) -> k.add(json.arrayNode().add(v[0]).add(v[1])),
+                      ArrayNode::addAll
                     )
-                    .set("coordinate", json.arrayNode(2).add(coordinate[0]).add(coordinate[1]))
-                )
+                  )
               )
           )
         );
@@ -251,7 +250,7 @@ public final class SessionResource {
       .flatMap(segment -> segment.getEnhancements().stream())
       .filter(enhancement -> enhancement.type().equals("MAP_WAY"))
       .map(EnvelopeMapWay::new)
-      .flatMap(way -> Arrays.stream(way.payload().nodes()))
+      .flatMap(way -> Arrays.stream(way.payload().matches()))
       .distinct()
       .collect(Collectors.toList());
 
@@ -272,22 +271,32 @@ public final class SessionResource {
         this.dsInsider.createQuery(SessionSegment.class)
           .field("enhancements.type").equal("MAP_WAY")
       )
-      .unwind("enhancements.payload.nodes")
+      .unwind("enhancements.payload.matches")
       .project(
         Projection.projection("session"),
-        Projection.projection("nodes", "enhancements.payload.nodes")
+        Projection.projection("matches", "enhancements.payload.matches")
       )
-      .unwind("nodes")
+      .unwind("matches")
       .group(
         Group.grouping("_id", "session"),
-        Group.grouping("nodes", Group.addToSet("nodes"))
+        Group.grouping("matches", Group.addToSet("matches"))
       )
       .project(
+        Projection.projection("matches"),
+        Projection.projection("hits", Projection.projection("$size", "matches"))
+      )
+      .match(
+        this.dsInsider.createQuery(SessionAlikeDto.class) // 50% window
+          .field("hits").greaterThanOrEq(Math.round(nodes.size() * 0.75)) // 75%
+          .field("hits").lessThanOrEq(Math.round(nodes.size() * 1.25)) // 125%
+      )
+      .project(
+        Projection.projection("hits"),
         Projection.projection(
           "intersection",
           Projection.projection(
             "$size",
-            Projection.expression("$setIntersection", "$nodes", nodes)
+            Projection.expression("$setIntersection", "$matches", nodes)
           )
         )
       )
