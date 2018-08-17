@@ -33,8 +33,11 @@ import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -110,7 +113,7 @@ public final class SessionResource {
 
   @GET
   @Path("/{id}/environment")
-  //@CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   public Response segments(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
@@ -163,10 +166,58 @@ public final class SessionResource {
     @DefaultValue("gps") @QueryParam("source") final String source
   ) {
     final JsonNodeFactory json = JsonNodeFactory.instance;
+    final ArrayNode locations = json.arrayNode();
+    final Map<List<Double[]>, String> coordinates = new LinkedHashMap<>();
     final Query<SessionSegment> query = this.dsSession
       .createQuery(SessionSegment.class).field("session").equal(id);
 
     switch (source) {
+      case "mixed": {
+        final List<SessionSegment> segments = query
+          .field("attributes.latitude").exists()
+          .project("attributes.latitude", true)
+          .project("attributes.longitude", true)
+          .project("enhancements", true)
+          .order(Sort.ascending("_id"))
+          .asList();
+
+        List<List<Double[]>> listToClean = new ArrayList<>();
+        int idx = 0;
+        for (final SessionSegment segment : segments) {
+          // always inject the first coordinate
+          if (idx++ < 1) {
+            coordinates.put(Arrays.<Double[]>asList(new Double[]{
+              segment.getAttributes().getLongitude(),
+              segment.getAttributes().getLatitude()
+            }), null);
+            continue;
+          }
+
+          final List<EnvelopeMapMatch> list = segment.getEnhancements().stream()
+            .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
+            .map(EnvelopeMapMatch::new)
+            .filter(enhancement -> enhancement.payload().alternatives() < 10)
+            .collect(Collectors.toList());
+
+          if (list.isEmpty()) {
+            final List<Double[]> point = Arrays.<Double[]>asList(new Double[]{
+              segment.getAttributes().getLongitude(),
+              segment.getAttributes().getLatitude()
+            });
+            coordinates.put(point, null);
+            listToClean.add(point);
+            continue;
+          }
+
+          listToClean.forEach(coordinates::remove);
+          listToClean.clear();
+
+          list.forEach(entry ->
+            coordinates.put(entry.payload().coordinates(), entry.payload().name())
+          );
+        }
+      } break;
+
       case "gps": {
         final List<SessionSegment> segments = query
           .field("attributes.latitude").exists()
@@ -175,23 +226,16 @@ public final class SessionResource {
           .order(Sort.ascending("timestamp"))
           .asList();
 
-        final ArrayNode locations = json.arrayNode(segments.size() + 1);
         segments.forEach(segment ->
-          locations.add(
-            json.objectNode()
-              .putNull("name")
-              .set(
-                "coordinates",
-                json.arrayNode().add(
-                  json.arrayNode()
-                    .add(segment.getAttributes().getLongitude())
-                    .add(segment.getAttributes().getLatitude())
-                )
-              )
+          coordinates.put(Arrays.<Double[]>asList(
+            new Double[]{
+              segment.getAttributes().getLongitude(),
+              segment.getAttributes().getLatitude()
+            }),
+            null
           )
         );
-        return Response.ok(new InsiderEnvelop(locations)).build();
-      }
+      } break;
 
       case "map": {
         final List<SessionSegment> segments = query
@@ -200,31 +244,35 @@ public final class SessionResource {
           .order(Sort.ascending("timestamp"))
           .asList();
 
-        final ArrayNode locations = json.arrayNode(segments.size() + 1);
-
         segments.forEach(segment ->
           segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
-            .map(EnvelopeMapMatch::new).forEachOrdered(enhancement ->
-              locations.add(
-                json.objectNode()
-                  .put("name", enhancement.payload().name())
-                  .putPOJO("coordinates",
-                    enhancement.payload().coordinates().stream().collect(
-                      json::arrayNode,
-                      (k, v) -> k.add(json.arrayNode().add(v[0]).add(v[1])),
-                      ArrayNode::addAll
-                    )
-                  )
-              )
-          )
+            .map(EnvelopeMapMatch::new)
+            .forEachOrdered(entry ->
+              coordinates.put(entry.payload().coordinates(), entry.payload().name())
+            )
         );
-        return Response.ok(new InsiderEnvelop(locations)).build();
-      }
+      } break;
 
       default:
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
+
+    coordinates.entrySet().forEach(entry ->
+      locations.add(
+        json.objectNode()
+          .put("name", entry.getValue())
+          .putPOJO("coordinates",
+            entry.getKey().stream().collect(
+              json::arrayNode,
+              (k, v) -> k.add(json.arrayNode().add(v[0]).add(v[1])),
+              ArrayNode::addAll
+            )
+          )
+      )
+    );
+
+    return Response.ok(new InsiderEnvelop(locations)).build();
   }
 
   @GET
