@@ -28,6 +28,7 @@ import de.tanktaler.insider.models.session.MapWay;
 import de.tanktaler.insider.models.session.SessionSegment;
 import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.SessionAlikeDto;
+import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeDeviceEvent;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapMatch;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
@@ -158,8 +159,36 @@ public final class SessionResource {
   }
 
   @GET
+  @Path("/{id}/events")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  public Response fetchAllEvents(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id
+  ) {
+    final JsonNodeFactory json = JsonNodeFactory.instance;
+    final ArrayNode events = json.arrayNode();
+
+    this.dsSession
+      .createQuery(SessionSegment.class).field("session").equal(id)
+      .project("events", true)
+      .order(Sort.ascending("timestamp"))
+      .asList()
+      .stream()
+      .flatMap(entry -> entry.getEvents().stream())
+      .map(EnvelopeDeviceEvent::new)
+      .forEachOrdered(entry ->
+        events.addObject()
+          .put("type", entry.type())
+          .put("timestamp", entry.timestamp().toEpochMilli())
+          .set("payload", json.pojoNode(entry.payload()))
+      );
+
+    return Response.ok(new InsiderEnvelop(events)).build();
+  }
+
+  @GET
   @Path("/{id}/locations")
-  //@CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response fetchAllLocations(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
@@ -178,7 +207,7 @@ public final class SessionResource {
           .project("attributes.latitude", true)
           .project("attributes.longitude", true)
           .project("enhancements", true)
-          .order(Sort.ascending("_id"))
+          .order(Sort.ascending("timestamp"))
           .asList();
 
         List<List<Double[]>> listToClean = new ArrayList<>();
