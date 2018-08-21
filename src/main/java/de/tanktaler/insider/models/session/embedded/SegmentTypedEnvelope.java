@@ -23,9 +23,10 @@ import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded
 public final class SegmentTypedEnvelope implements Envelope<BasicDBObject> {
-  private BasicDBObject payload;
-  private Instant timestamp;
   private String type;
+  private Instant timestamp;
+  private Integer version;
+  private BasicDBObject payload;
 
   @Override
   public BasicDBObject payload() {
@@ -40,5 +41,10 @@ public final class SegmentTypedEnvelope implements Envelope<BasicDBObject> {
   @Override
   public String type() {
     return this.type;
+  }
+
+  @Override
+  public Integer version() {
+    return this.version;
   }
 }

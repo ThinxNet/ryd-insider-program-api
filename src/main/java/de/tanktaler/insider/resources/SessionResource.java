@@ -28,13 +28,17 @@ import de.tanktaler.insider.models.session.MapWay;
 import de.tanktaler.insider.models.session.SessionSegment;
 import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.SessionAlikeDto;
+import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeDeviceEvent;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapMatch;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -135,16 +139,16 @@ public final class SessionResource {
       .map(way -> {
         final MapWay entity = this.dsSession.createQuery(MapWay.class)
           .field("_id").equal(way.payload().id())
-          .field("changeset").equal(way.payload().changeset())
+          .field("timestamp").equal(way.payload().timestamp()) // timestamp of the way
           .project("geometry", true)
           .project("tags", true)
           .project("address", true)
           .get();
         return Objects.isNull(entity) ? null : JsonNodeFactory.instance.objectNode()
-          .put("speed", way.payload().speed())
-          .put("distance", way.payload().distance())
-          .put("duration", way.payload().duration())
-          .put("timestamp", way.timestamp().toEpochMilli())
+          .put("distanceM", way.payload().distanceM())
+          .put("durationS", way.payload().durationS())
+          .put("speedMs", way.payload().speedMs())
+          .put("timestamp", way.timestamp().toEpochMilli()) // timestamp of the entry
           .putPOJO("address", entity.getAddress())
           .putPOJO("tags", entity.getTags());
       })
@@ -152,6 +156,34 @@ public final class SessionResource {
       .collect(Collectors.toList());
 
     return Response.ok(new InsiderEnvelop(ways)).build();
+  }
+
+  @GET
+  @Path("/{id}/events")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  public Response fetchAllEvents(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id
+  ) {
+    final JsonNodeFactory json = JsonNodeFactory.instance;
+    final ArrayNode events = json.arrayNode();
+
+    this.dsSession
+      .createQuery(SessionSegment.class).field("session").equal(id)
+      .project("events", true)
+      .order(Sort.ascending("timestamp"))
+      .asList()
+      .stream()
+      .flatMap(entry -> entry.getEvents().stream())
+      .map(EnvelopeDeviceEvent::new)
+      .forEachOrdered(entry ->
+        events.addObject()
+          .put("type", entry.type())
+          .put("timestamp", entry.timestamp().toEpochMilli())
+          .set("payload", json.pojoNode(entry.payload()))
+      );
+
+    return Response.ok(new InsiderEnvelop(events)).build();
   }
 
   @GET
@@ -163,69 +195,113 @@ public final class SessionResource {
     @DefaultValue("gps") @QueryParam("source") final String source
   ) {
     final JsonNodeFactory json = JsonNodeFactory.instance;
+    final ArrayNode locations = json.arrayNode();
+    final Map<List<Double[]>, String> coordinates = new LinkedHashMap<>();
     final Query<SessionSegment> query = this.dsSession
       .createQuery(SessionSegment.class).field("session").equal(id);
 
     switch (source) {
+      case "mixed": {
+        final List<SessionSegment> segments = query
+          .field("attributes.latitude").exists()
+          .project("attributes.latitude", true)
+          .project("attributes.longitude", true)
+          .project("enhancements", true)
+          .order(Sort.ascending("timestamp"))
+          .asList();
+
+        List<List<Double[]>> listToClean = new ArrayList<>();
+        int idx = 0;
+        for (final SessionSegment segment : segments) {
+          // always inject the first coordinate
+          if (idx++ < 1) {
+            coordinates.put(Arrays.<Double[]>asList(new Double[]{
+              segment.getAttributes().getLongitude(),
+              segment.getAttributes().getLatitude()
+            }), null);
+            continue;
+          }
+
+          final List<EnvelopeMapMatch> list = segment.getEnhancements().stream()
+            .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
+            .map(EnvelopeMapMatch::new)
+            .filter(enhancement -> enhancement.payload().alternatives() < 10)
+            .collect(Collectors.toList());
+
+          if (list.isEmpty()) {
+            final List<Double[]> point = Arrays.<Double[]>asList(new Double[]{
+              segment.getAttributes().getLongitude(),
+              segment.getAttributes().getLatitude()
+            });
+            coordinates.put(point, null);
+            listToClean.add(point);
+            continue;
+          }
+
+          listToClean.forEach(coordinates::remove);
+          listToClean.clear();
+
+          list.forEach(entry ->
+            coordinates.put(entry.payload().coordinates(), entry.payload().name())
+          );
+        }
+      } break;
+
       case "gps": {
         final List<SessionSegment> segments = query
           .field("attributes.latitude").exists()
           .project("attributes.latitude", true)
           .project("attributes.longitude", true)
+          .order(Sort.ascending("timestamp"))
           .asList();
 
-        final ArrayNode locations = json.arrayNode(segments.size() + 1);
         segments.forEach(segment ->
-          locations.add(
-            json.objectNode()
-              .putNull("street")
-              .set(
-                "coordinate",
-                json.arrayNode(2)
-                  .add(segment.getAttributes().getLongitude())
-                  .add(segment.getAttributes().getLatitude())
-              )
+          coordinates.put(Arrays.<Double[]>asList(
+            new Double[]{
+              segment.getAttributes().getLongitude(),
+              segment.getAttributes().getLatitude()
+            }),
+            null
           )
         );
-        return Response.ok(new InsiderEnvelop(locations)).build();
-      }
+      } break;
 
       case "map": {
         final List<SessionSegment> segments = query
           .field("enhancements.type").equal("MAP_MATCH")
           .project("enhancements", true)
+          .order(Sort.ascending("timestamp"))
           .asList();
-
-        final ArrayNode locations = json.arrayNode(segments.size() + 1);
 
         segments.forEach(segment ->
           segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
-            .map(EnvelopeMapMatch::new).forEach(enhancement ->
-              enhancement.payload().coordinates().forEach(
-                coordinate -> locations.add(
-                  json.objectNode()
-                    .put(
-                      "street",
-                      enhancement.payload().traces().stream()
-                        .filter(trace ->
-                          !trace.street().isEmpty()
-                          && Arrays.equals(trace.location(), coordinate)
-                        )
-                        .map(EnvelopeMapMatch.Payload.Trace::street)
-                        .findFirst().orElse(null)
-                    )
-                    .set("coordinate", json.arrayNode(2).add(coordinate[0]).add(coordinate[1]))
-                )
-              )
-          )
+            .map(EnvelopeMapMatch::new)
+            .forEachOrdered(entry ->
+              coordinates.put(entry.payload().coordinates(), entry.payload().name())
+            )
         );
-        return Response.ok(new InsiderEnvelop(locations)).build();
-      }
+      } break;
 
       default:
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
+
+    coordinates.entrySet().forEach(entry ->
+      locations.add(
+        json.objectNode()
+          .put("name", entry.getValue())
+          .putPOJO("coordinates",
+            entry.getKey().stream().collect(
+              json::arrayNode,
+              (k, v) -> k.add(json.arrayNode().add(v[0]).add(v[1])),
+              ArrayNode::addAll
+            )
+          )
+      )
+    );
+
+    return Response.ok(new InsiderEnvelop(locations)).build();
   }
 
   @GET
@@ -251,7 +327,7 @@ public final class SessionResource {
       .flatMap(segment -> segment.getEnhancements().stream())
       .filter(enhancement -> enhancement.type().equals("MAP_WAY"))
       .map(EnvelopeMapWay::new)
-      .flatMap(way -> Arrays.stream(way.payload().nodes()))
+      .flatMap(way -> Arrays.stream(way.payload().matches()))
       .distinct()
       .collect(Collectors.toList());
 
@@ -272,22 +348,32 @@ public final class SessionResource {
         this.dsInsider.createQuery(SessionSegment.class)
           .field("enhancements.type").equal("MAP_WAY")
       )
-      .unwind("enhancements.payload.nodes")
+      .unwind("enhancements.payload.matches")
       .project(
         Projection.projection("session"),
-        Projection.projection("nodes", "enhancements.payload.nodes")
+        Projection.projection("matches", "enhancements.payload.matches")
       )
-      .unwind("nodes")
+      .unwind("matches")
       .group(
         Group.grouping("_id", "session"),
-        Group.grouping("nodes", Group.addToSet("nodes"))
+        Group.grouping("matches", Group.addToSet("matches"))
       )
       .project(
+        Projection.projection("matches"),
+        Projection.projection("hits", Projection.projection("$size", "matches"))
+      )
+      .match(
+        this.dsInsider.createQuery(SessionAlikeDto.class) // 50% window
+          .field("hits").greaterThanOrEq(Math.round(nodes.size() * 0.75)) // 75%
+          .field("hits").lessThanOrEq(Math.round(nodes.size() * 1.25)) // 125%
+      )
+      .project(
+        Projection.projection("hits"),
         Projection.projection(
           "intersection",
           Projection.projection(
             "$size",
-            Projection.expression("$setIntersection", "$nodes", nodes)
+            Projection.expression("$setIntersection", "$matches", nodes)
           )
         )
       )

@@ -23,7 +23,12 @@ import org.mongodb.morphia.annotations.Id;
 public final class SessionAlikeDto {
   @Id
   public ObjectId session;
+
   public Double confidence;
+
+  @JsonIgnore
+  public Integer hits;
+
   @JsonIgnore
   public Integer intersection;
 }

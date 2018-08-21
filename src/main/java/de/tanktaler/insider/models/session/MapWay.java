@@ -41,7 +41,7 @@ public final class MapWay {
   @Embedded
   private MapWayAddress address;
 
-  private Long changeset;
+  private Long timestamp;
 
   public Long getId() {
     return this.id;
@@ -67,8 +67,8 @@ public final class MapWay {
     return this.nodes;
   }
 
-  public Long getChangeset() {
-    return this.changeset;
+  public Long getTimestamp() {
+    return this.timestamp;
   }
 
   public MapWayAddress getAddress() {

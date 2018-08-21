@@ -24,15 +24,27 @@ import org.mongodb.morphia.annotations.Embedded;
 @Embedded
 public final class EnvelopeWeather implements Envelope<Document> {
   private final String type;
+
   private final Instant timestamp;
+
+  private final Integer version;
 
   @Embedded
   private final Document payload;
 
-  public EnvelopeWeather(final String type, final Instant timestamp, final Document payload) {
+  public EnvelopeWeather(
+    final String type, final Instant timestamp, final Integer version, final Document payload
+  ) {
     this.type = type;
     this.timestamp = timestamp;
+    this.version = version;
     this.payload = payload;
+  }
+
+  public EnvelopeWeather(
+    final String type, final Instant timestamp, final Document payload
+  ) {
+    this(type, timestamp, 1, payload);
   }
 
   public EnvelopeWeather(final SegmentTypedEnvelope envelope) {
@@ -47,6 +59,11 @@ public final class EnvelopeWeather implements Envelope<Document> {
   @Override
   public Instant timestamp() {
     return this.timestamp;
+  }
+
+  @Override
+  public Integer version() {
+    return this.version;
   }
 
   @Override

@@ -19,22 +19,33 @@ package de.tanktaler.insider.models.session.embedded.envelope;
 import de.tanktaler.insider.models.session.embedded.SegmentTypedEnvelope;
 import java.time.Instant;
 import org.bson.Document;
+import org.mongodb.morphia.annotations.Embedded;
 
 public final class EnvelopeDeviceEvent implements Envelope<Document> {
   private final String type;
+
   private final Instant timestamp;
+
+  private final Integer version;
+
+  @Embedded
   private final Document payload;
 
   public EnvelopeDeviceEvent(
-    final String type, final Instant timestamp, final Document payload
+    final String type, final Instant timestamp, final Integer version, final Document payload
   ) {
     this.type = type;
     this.timestamp = timestamp;
+    this.version = version;
     this.payload = payload;
   }
 
+  public EnvelopeDeviceEvent(final String type, final Instant timestamp, final Document payload) {
+    this(type, timestamp, 1, payload);
+  }
+
   public EnvelopeDeviceEvent(final SegmentTypedEnvelope envelope) {
-    this(envelope.type(), envelope.timestamp(), new Document(envelope.payload()));
+    this(envelope.type(), envelope.timestamp(), 1, new Document(envelope.payload()));
   }
 
   @Override
@@ -45,6 +56,11 @@ public final class EnvelopeDeviceEvent implements Envelope<Document> {
   @Override
   public Instant timestamp() {
     return this.timestamp;
+  }
+
+  @Override
+  public Integer version() {
+    return this.version;
   }
 
   @Override
