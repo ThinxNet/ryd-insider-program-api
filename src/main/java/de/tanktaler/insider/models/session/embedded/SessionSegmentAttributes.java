@@ -22,6 +22,10 @@ import org.mongodb.morphia.annotations.Embedded;
 public final class SessionSegmentAttributes {
   private Double latitude;
   private Double longitude;
+  private Double obdMaxRpm;
+  private Integer geoSpeedKmH;
+  private Integer gpsSpeedKmH;
+  private Integer obdMaxSpeedKmH;
 
   public Double getLatitude() {
     return this.latitude;
@@ -29,5 +33,21 @@ public final class SessionSegmentAttributes {
 
   public Double getLongitude() {
     return this.longitude;
+  }
+
+  public Double obdMaxRpm() {
+    return this.obdMaxRpm;
+  }
+
+  public Integer getGeoSpeedKmH() {
+    return this.geoSpeedKmH;
+  }
+
+  public Integer getGpsSpeedKmH() {
+    return this.gpsSpeedKmH;
+  }
+
+  public Integer obdMaxSpeedKmH() {
+    return this.obdMaxSpeedKmH;
   }
 }
