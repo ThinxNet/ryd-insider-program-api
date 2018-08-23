@@ -54,6 +54,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.util.Precision;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
@@ -196,7 +198,7 @@ public final class SessionResource {
   ) {
     final JsonNodeFactory json = JsonNodeFactory.instance;
     final ArrayNode locations = json.arrayNode();
-    final Map<List<Double[]>, String> coordinates = new LinkedHashMap<>();
+    final Map<ObjectId, Pair<List<Double[]>, String>> coordinates = new LinkedHashMap<>();
     final Query<SessionSegment> query = this.dsSession
       .createQuery(SessionSegment.class).field("session").equal(id);
 
@@ -215,10 +217,13 @@ public final class SessionResource {
         for (final SessionSegment segment : segments) {
           // always inject the first coordinate
           if (idx++ < 1) {
-            coordinates.put(Arrays.<Double[]>asList(new Double[]{
-              segment.getAttributes().getLongitude(),
-              segment.getAttributes().getLatitude()
-            }), null);
+            coordinates.put(
+              segment.getId(),
+              new ImmutablePair<>(Arrays.<Double[]>asList(new Double[]{
+                segment.getAttributes().getLongitude(),
+                segment.getAttributes().getLatitude()
+              }), null)
+            );
             continue;
           }
 
@@ -233,7 +238,7 @@ public final class SessionResource {
               segment.getAttributes().getLongitude(),
               segment.getAttributes().getLatitude()
             });
-            coordinates.put(point, null);
+            coordinates.put(segment.getId(), new ImmutablePair<>(point, null));
             listToClean.add(point);
             continue;
           }
@@ -242,7 +247,10 @@ public final class SessionResource {
           listToClean.clear();
 
           list.forEach(entry ->
-            coordinates.put(entry.payload().coordinates(), entry.payload().name())
+            coordinates.put(
+              segment.getId(),
+              new ImmutablePair<>(entry.payload().coordinates(), entry.payload().name())
+            )
           );
         }
       } break;
@@ -256,12 +264,12 @@ public final class SessionResource {
           .asList();
 
         segments.forEach(segment ->
-          coordinates.put(Arrays.<Double[]>asList(
-            new Double[]{
+          coordinates.put(
+            segment.getId(),
+            new ImmutablePair<>(Arrays.<Double[]>asList(new Double[]{
               segment.getAttributes().getLongitude(),
               segment.getAttributes().getLatitude()
-            }),
-            null
+            }), null)
           )
         );
       } break;
@@ -278,7 +286,10 @@ public final class SessionResource {
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
             .map(EnvelopeMapMatch::new)
             .forEachOrdered(entry ->
-              coordinates.put(entry.payload().coordinates(), entry.payload().name())
+              coordinates.put(
+                segment.getId(),
+                new ImmutablePair<>(entry.payload().coordinates(), entry.payload().name())
+              )
             )
         );
       } break;
@@ -290,9 +301,10 @@ public final class SessionResource {
     coordinates.entrySet().forEach(entry ->
       locations.add(
         json.objectNode()
-          .put("name", entry.getValue())
+          .put("_id", entry.getKey().toString())
+          .put("name", entry.getValue().getValue())
           .putPOJO("coordinates",
-            entry.getKey().stream().collect(
+            entry.getValue().getKey().stream().collect(
               json::arrayNode,
               (k, v) -> k.add(json.arrayNode().add(v[0]).add(v[1])),
               ArrayNode::addAll
