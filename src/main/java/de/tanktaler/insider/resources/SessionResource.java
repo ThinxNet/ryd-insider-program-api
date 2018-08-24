@@ -34,6 +34,7 @@ import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -209,22 +210,19 @@ public final class SessionResource {
           .project("attributes.latitude", true)
           .project("attributes.longitude", true)
           .project("enhancements", true)
+          .project("timestamp", true)
           .order(Sort.ascending("timestamp"))
           .asList();
 
-        List<List<Double[]>> listToClean = new ArrayList<>();
+        final List<List<Double[]>> listToClean = new ArrayList<>();
+        final int segmentsCount = segments.size();
+
+        Instant lastMapLocationTimestamp = null;
         int idx = 0;
         for (final SessionSegment segment : segments) {
           // always inject the first coordinate
-          if (idx++ < 1) {
-            coordinates.put(
-              segment.getId(),
-              new ImmutablePair<>(Arrays.<Double[]>asList(new Double[]{
-                segment.getAttributes().getLongitude(),
-                segment.getAttributes().getLatitude()
-              }), null)
-            );
-            continue;
+          if (idx++ == 1) {
+            listToClean.clear();
           }
 
           final List<EnvelopeMapMatch> list = segment.getEnhancements().stream()
@@ -234,6 +232,12 @@ public final class SessionResource {
             .collect(Collectors.toList());
 
           if (list.isEmpty()) {
+            if (idx < segmentsCount
+              && Objects.nonNull(lastMapLocationTimestamp)
+              && lastMapLocationTimestamp.isAfter(segment.getTimestamp())) {
+                continue;
+            }
+
             final List<Double[]> point = Arrays.<Double[]>asList(new Double[]{
               segment.getAttributes().getLongitude(),
               segment.getAttributes().getLatitude()
@@ -246,12 +250,14 @@ public final class SessionResource {
           listToClean.forEach(coordinates::remove);
           listToClean.clear();
 
-          list.forEach(entry ->
+          for (final EnvelopeMapMatch entry : list) {
             coordinates.put(
               segment.getId(),
               new ImmutablePair<>(entry.payload().coordinates(), entry.payload().name())
-            )
-          );
+            );
+            lastMapLocationTimestamp = entry.timestamp()
+              .plusMillis(Math.round(entry.payload().durationS() * 1000));
+          }
         }
       } break;
 
