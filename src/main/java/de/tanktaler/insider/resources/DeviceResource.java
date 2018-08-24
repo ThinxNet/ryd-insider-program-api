@@ -24,9 +24,12 @@ import de.tanktaler.insider.models.session.SessionConfidence;
 import de.tanktaler.insider.models.session.aggregation.DeviceConfidenceDto;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -43,27 +46,29 @@ import org.mongodb.morphia.aggregation.Group;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class DeviceResource {
-  // @todo! move it to validators
-  private final Datastore dsInsider;
-  private final Datastore dsSession;
+  @Inject
+  @Named("dsInsider")
+  private Datastore dsInsider;
 
-  public DeviceResource(final Datastore dsInsider, final Datastore dsSession) {
-    this.dsInsider = dsInsider;
-    this.dsSession = dsSession;
-  }
+  @Inject
+  @Named("dsSession")
+  private Datastore dsSession;
 
   @Inject
   private Morphia morphia;
 
   @GET
   @Path("/{id}")
-  public Response fetchOne(
+  public Object fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id
   ) {
-    return Response.ok(new InsiderEnvelop(
-      this.morphia.toDBObject(this.dsInsider.get(Device.class, id))
-    )).build();
+    final Device device = this.dsInsider.get(Device.class, id);
+    if (Objects.isNull(device)) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    return new ItemContentSingletonResource(device);
   }
 
   @GET
@@ -99,4 +104,26 @@ public final class DeviceResource {
       )
     ).build();
   }
+
+  @Singleton
+public class ItemContentSingletonResource {
+  private final Device device;
+
+  @Inject
+  private Morphia morphia;
+
+  public ItemContentSingletonResource(Device device) {
+    this.device = device;
+  }
+
+    @GET
+  @Path("/")
+  public Object fetchOne(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id
+  ) {
+
+    return Response.ok(new InsiderEnvelop(this.morphia.toDBObject(this.device))).build();
+  }
+}
 }
