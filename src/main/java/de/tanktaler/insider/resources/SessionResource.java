@@ -34,12 +34,11 @@ import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -55,8 +54,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.util.Precision;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
@@ -199,7 +198,7 @@ public final class SessionResource {
   ) {
     final JsonNodeFactory json = JsonNodeFactory.instance;
     final ArrayNode locations = json.arrayNode();
-    final Map<ObjectId, Pair<List<Double[]>, String>> coordinates = new LinkedHashMap<>();
+    final List<Triple<ObjectId, List<Double[]>, String>> coordinates = new ArrayList<>();
     final Query<SessionSegment> query = this.dsSession
       .createQuery(SessionSegment.class).field("session").equal(id);
 
@@ -220,29 +219,31 @@ public final class SessionResource {
         Instant lastMapLocationTimestamp = null;
         int idx = 0;
         for (final SessionSegment segment : segments) {
-          // always inject the first coordinate
-          if (idx++ == 1) {
-            listToClean.clear();
-          }
+          final List<Double[]> point = Arrays.<Double[]>asList(new Double[]{
+            segment.getAttributes().getLongitude(),
+            segment.getAttributes().getLatitude()
+          });
 
           final List<EnvelopeMapMatch> list = segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
             .map(EnvelopeMapMatch::new)
-            .filter(enhancement -> enhancement.payload().alternatives() < 10)
+            .filter(enhancement -> enhancement.payload().alternatives() < 5)
             .collect(Collectors.toList());
 
-          if (list.isEmpty()) {
-            if (idx < segmentsCount
-              && Objects.nonNull(lastMapLocationTimestamp)
-              && lastMapLocationTimestamp.isAfter(segment.getTimestamp())) {
-                continue;
-            }
+          // always inject the first coordinate
+          if (idx++ < 1) {
+            coordinates.add(new ImmutableTriple<>(segment.getId(), point, null));
+          }
 
-            final List<Double[]> point = Arrays.<Double[]>asList(new Double[]{
-              segment.getAttributes().getLongitude(),
-              segment.getAttributes().getLatitude()
-            });
-            coordinates.put(segment.getId(), new ImmutablePair<>(point, null));
+          if (list.isEmpty()) {
+            if (idx < segmentsCount && Objects.nonNull(lastMapLocationTimestamp)) {
+              final Duration duration = Duration
+                .between(lastMapLocationTimestamp, segment.getTimestamp());
+              if (duration.getSeconds() < 60) {
+                continue;
+              }
+            }
+            coordinates.add(new ImmutableTriple<>(segment.getId(), point, null));
             listToClean.add(point);
             continue;
           }
@@ -251,11 +252,10 @@ public final class SessionResource {
           listToClean.clear();
 
           for (final EnvelopeMapMatch entry : list) {
-            coordinates.put(
-              segment.getId(),
-              new ImmutablePair<>(entry.payload().coordinates(), entry.payload().name())
-            );
-            lastMapLocationTimestamp = entry.timestamp()
+            coordinates.add(new ImmutableTriple<>(
+              segment.getId(), entry.payload().coordinates(), entry.payload().name()
+            ));
+            lastMapLocationTimestamp = segment.getTimestamp()
               .plusMillis(Math.round(entry.payload().durationS() * 1000));
           }
         }
@@ -270,12 +270,15 @@ public final class SessionResource {
           .asList();
 
         segments.forEach(segment ->
-          coordinates.put(
-            segment.getId(),
-            new ImmutablePair<>(Arrays.<Double[]>asList(new Double[]{
-              segment.getAttributes().getLongitude(),
-              segment.getAttributes().getLatitude()
-            }), null)
+          coordinates.add(
+            new ImmutableTriple<>(
+              segment.getId(),
+              Arrays.<Double[]>asList(new Double[]{
+                segment.getAttributes().getLongitude(),
+                segment.getAttributes().getLatitude()
+              }),
+              null
+            )
           )
         );
       } break;
@@ -292,10 +295,9 @@ public final class SessionResource {
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
             .map(EnvelopeMapMatch::new)
             .forEachOrdered(entry ->
-              coordinates.put(
-                segment.getId(),
-                new ImmutablePair<>(entry.payload().coordinates(), entry.payload().name())
-              )
+              coordinates.add(new ImmutableTriple<>(
+                segment.getId(), entry.payload().coordinates(), entry.payload().name()
+              ))
             )
         );
       } break;
@@ -304,13 +306,13 @@ public final class SessionResource {
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
-    coordinates.entrySet().forEach(entry ->
+    coordinates.forEach(entry ->
       locations.add(
         json.objectNode()
-          .put("_id", entry.getKey().toString())
-          .put("name", entry.getValue().getValue())
+          .put("_id", entry.getLeft().toString())
+          .put("name", entry.getRight())
           .putPOJO("coordinates",
-            entry.getValue().getKey().stream().collect(
+            entry.getMiddle().stream().collect(
               json::arrayNode,
               (k, v) -> k.add(json.arrayNode().add(v[0]).add(v[1])),
               ArrayNode::addAll
