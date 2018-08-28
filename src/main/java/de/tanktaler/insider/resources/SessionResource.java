@@ -34,6 +34,7 @@ import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -239,12 +240,18 @@ public final class SessionResource {
           // always inject the first coordinate
           if (idx < 1) {
             coordinates.add(point);
-          } else if (list.isEmpty()
-            && (Objects.isNull(lastMapLocationTimestamp)
-              || lastMapLocationTimestamp.isBefore(segment.getTimestamp()))) {
-            coordinates.add(point);
-            buffer.add(point);
-            continue;
+          } else if (list.isEmpty()) {
+            if (Objects.isNull(lastMapLocationTimestamp)
+              || (
+                lastMapLocationTimestamp.isBefore(segment.getTimestamp())
+                && Duration
+                  .between(lastMapLocationTimestamp, segment.getTimestamp()).getSeconds() > 5
+              )
+            ) {
+              coordinates.add(point);
+              buffer.add(point);
+              continue;
+            }
           }
 
           if (buffer.size() > 0) {
