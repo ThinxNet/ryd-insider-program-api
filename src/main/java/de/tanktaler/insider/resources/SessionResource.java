@@ -34,8 +34,6 @@ import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -58,6 +56,7 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.util.Precision;
 import org.bson.types.ObjectId;
+import org.geotools.referencing.GeodeticCalculator;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.aggregation.Group;
@@ -213,50 +212,69 @@ public final class SessionResource {
           .order(Sort.ascending("timestamp"))
           .asList();
 
-        final List<List<Double[]>> listToClean = new ArrayList<>();
+        final List<Triple<ObjectId, List<Double[]>, String>> buffer = new ArrayList<>();
         final int segmentsCount = segments.size();
 
-        Instant lastMapLocationTimestamp = null;
-        int idx = 0;
-        for (final SessionSegment segment : segments) {
-          final List<Double[]> point = Arrays.<Double[]>asList(new Double[]{
-            segment.getAttributes().getLongitude(),
-            segment.getAttributes().getLatitude()
-          });
+        Double[] lastSuitableCoordinate = null;
+
+        for (int idx = 0; idx < segmentsCount; idx++) {
+          final SessionSegment segment = segments.get(idx);
+          final Triple<ObjectId, List<Double[]>, String> point = new ImmutableTriple<>(
+            segment.getId(),
+            Arrays.<Double[]>asList(new Double[]{
+              segment.getAttributes().getLongitude(),
+              segment.getAttributes().getLatitude()
+            }),
+            null
+          );
 
           final List<EnvelopeMapMatch> list = segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
             .map(EnvelopeMapMatch::new)
-            .filter(enhancement -> enhancement.payload().alternatives() < 5)
+            .filter(enhancement -> enhancement.payload().alternatives() < 4)
             .collect(Collectors.toList());
 
           // always inject the first coordinate
-          if (idx++ < 1) {
-            coordinates.add(new ImmutableTriple<>(segment.getId(), point, null));
+          if (idx < 1 || list.isEmpty()) {
+            coordinates.add(point);
           }
-
           if (list.isEmpty()) {
-            if (idx < segmentsCount && Objects.nonNull(lastMapLocationTimestamp)) {
-              final Duration duration = Duration
-                .between(lastMapLocationTimestamp, segment.getTimestamp());
-              if (duration.getSeconds() < 60) {
-                continue;
-              }
-            }
-            coordinates.add(new ImmutableTriple<>(segment.getId(), point, null));
-            listToClean.add(point);
+            buffer.add(point);
             continue;
           }
+          if (buffer.size() > 0) {
+            final GeodeticCalculator calc = new GeodeticCalculator();
+            for (int i = 0; i < buffer.size(); i++) {
+              final Double[] locationPrevious = i < 1
+                ? lastSuitableCoordinate : buffer.get(i - 1).getMiddle().get(0);
+              final Double[] locationNext = (i == buffer.size() - 1)
+                ? list.get(0).payload().coordinates().get(0) : buffer.get(i + 1).getMiddle().get(0);
+              final Double[] locationCurrent = buffer.get(i).getMiddle().get(0);
 
-          listToClean.forEach(coordinates::remove);
-          listToClean.clear();
+              calc.setStartingGeographicPoint(locationPrevious[0], locationPrevious[1]);
+              calc.setDestinationGeographicPoint(locationNext[0], locationNext[1]);
+              double distanceDirect = calc.getOrthodromicDistance();
 
-          for (final EnvelopeMapMatch entry : list) {
-            coordinates.add(new ImmutableTriple<>(
-              segment.getId(), entry.payload().coordinates(), entry.payload().name()
-            ));
-            lastMapLocationTimestamp = segment.getTimestamp()
-              .plusMillis(Math.round(entry.payload().durationS() * 1000));
+              calc.setStartingGeographicPoint(locationPrevious[0], locationPrevious[1]);
+              calc.setDestinationGeographicPoint(locationCurrent[0], locationCurrent[1]);
+              double distanceFromCurrent = calc.getOrthodromicDistance();
+
+              if (distanceDirect <= distanceFromCurrent
+                || distanceFromCurrent < 10
+                || distanceDirect - distanceFromCurrent < 10) {
+                coordinates.remove(buffer.get(i));
+                buffer.remove(i);
+                i--;
+              }
+            }
+          }
+
+          buffer.clear();
+
+          for (final EnvelopeMapMatch entry: list) {
+            final List<Double[]> cords = entry.payload().coordinates();
+            coordinates.add(new ImmutableTriple<>(segment.getId(), cords, entry.payload().name()));
+            lastSuitableCoordinate = cords.get(cords.size() - 1);
           }
         }
       } break;
