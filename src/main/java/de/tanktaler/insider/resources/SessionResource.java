@@ -34,6 +34,7 @@ import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import de.tanktaler.insider.models.session.embedded.envelope.EnvelopeWeather;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -216,9 +217,12 @@ public final class SessionResource {
         final int segmentsCount = segments.size();
 
         Double[] lastSuitableCoordinate = null;
+        Instant lastMapLocationTimestamp = null;
 
         for (int idx = 0; idx < segmentsCount; idx++) {
           final SessionSegment segment = segments.get(idx);
+          System.out.println(segment.getAttributes().getLongitude() + "," +
+              segment.getAttributes().getLatitude());
           final Triple<ObjectId, List<Double[]>, String> point = new ImmutableTriple<>(
             segment.getId(),
             Arrays.<Double[]>asList(new Double[]{
@@ -235,17 +239,20 @@ public final class SessionResource {
             .collect(Collectors.toList());
 
           // always inject the first coordinate
-          if (idx < 1 || list.isEmpty()) {
+          if (idx < 1) {
             coordinates.add(point);
-          }
-          if (list.isEmpty()) {
+          } else if (list.isEmpty()
+            && (Objects.isNull(lastMapLocationTimestamp)
+              || lastMapLocationTimestamp.isBefore(segment.getTimestamp()))) {
+            coordinates.add(point);
             buffer.add(point);
             continue;
           }
+
           if (buffer.size() > 0) {
             final GeodeticCalculator calc = new GeodeticCalculator();
             for (int i = 0; i < buffer.size(); i++) {
-              final Double[] locationPrevious = i < 1
+              final Double[] locationPrevious = (i < 1)
                 ? lastSuitableCoordinate : buffer.get(i - 1).getMiddle().get(0);
               final Double[] locationNext = (i == buffer.size() - 1)
                 ? list.get(0).payload().coordinates().get(0) : buffer.get(i + 1).getMiddle().get(0);
@@ -275,6 +282,8 @@ public final class SessionResource {
             final List<Double[]> cords = entry.payload().coordinates();
             coordinates.add(new ImmutableTriple<>(segment.getId(), cords, entry.payload().name()));
             lastSuitableCoordinate = cords.get(cords.size() - 1);
+            lastMapLocationTimestamp = segment.getTimestamp()
+              .plusMillis(Math.round(entry.payload().durationS() * 1000));
           }
         }
       } break;
