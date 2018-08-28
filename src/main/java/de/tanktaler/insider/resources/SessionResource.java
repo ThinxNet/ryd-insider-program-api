@@ -221,8 +221,6 @@ public final class SessionResource {
 
         for (int idx = 0; idx < segmentsCount; idx++) {
           final SessionSegment segment = segments.get(idx);
-          System.out.println(segment.getAttributes().getLongitude() + "," +
-              segment.getAttributes().getLatitude());
           final Triple<ObjectId, List<Double[]>, String> point = new ImmutableTriple<>(
             segment.getId(),
             Arrays.<Double[]>asList(new Double[]{
@@ -282,7 +280,7 @@ public final class SessionResource {
             final List<Double[]> cords = entry.payload().coordinates();
             coordinates.add(new ImmutableTriple<>(segment.getId(), cords, entry.payload().name()));
             lastSuitableCoordinate = cords.get(cords.size() - 1);
-            lastMapLocationTimestamp = segment.getTimestamp()
+            lastMapLocationTimestamp = entry.timestamp()
               .plusMillis(Math.round(entry.payload().durationS() * 1000));
           }
         }
