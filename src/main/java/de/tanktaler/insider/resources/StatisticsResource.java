@@ -23,7 +23,10 @@ import de.tanktaler.insider.models.session.SessionSummary;
 import de.tanktaler.insider.models.session.aggregation.ActivityDto;
 import de.tanktaler.insider.models.thing.Thing;
 import io.dropwizard.auth.Auth;
+import io.dropwizard.jersey.caching.CacheControl;
+import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -57,6 +60,7 @@ public final class StatisticsResource {
 
   @GET
   @Path("/{id}/activity")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id
@@ -67,16 +71,19 @@ public final class StatisticsResource {
     }
 
     final BasicDBList result = new BasicDBList();
+    final Instant timestamp = Instant.now().minusSeconds(2419200); // 28 days
 
     this.dsSession.createAggregation(SessionSummary.class)
       .match(
         this.dsInsider.createQuery(SessionSummary.class)
           .field("device").equal(thing.getDevice())
           .field("incomplete").equal(false)
+          .field("timestamp").greaterThanOrEq(timestamp)
       )
       .sort(Sort.descending("end"))
       .group(
         Group.grouping("_id", Accumulator.accumulator("$dayOfYear", "end")),
+        Group.grouping("count", Accumulator.accumulator("$sum", 1)),
         Group.grouping("geoDistanceM", Group.sum("statistics.geoDistanceM")),
         Group.grouping("geoDriveDurationS", Group.sum("statistics.geoDriveDurationS")),
         Group.grouping("geoStayDurationS", Group.sum("statistics.geoStayDurationS")),
@@ -87,8 +94,7 @@ public final class StatisticsResource {
         Group.grouping("obdDriveDurationS", Group.sum("statistics.obdDriveDurationS")),
         Group.grouping("obdStayDurationS", Group.sum("statistics.obdStayDurationS"))
       )
-      .sort(Sort.descending("_id"))
-      .limit(7)
+      .sort(Sort.ascending("_id"))
       .aggregate(ActivityDto.class)
       .forEachRemaining(result::add);
 
