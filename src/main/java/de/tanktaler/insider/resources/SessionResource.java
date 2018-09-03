@@ -254,7 +254,7 @@ public final class SessionResource {
             }
           }
 
-          if (buffer.size() > 0) {
+          if (buffer.size() > 0 && Objects.nonNull(lastSuitableCoordinate)) {
             final GeodeticCalculator calc = new GeodeticCalculator();
             for (int i = 0; i < buffer.size(); i++) {
               final Double[] locationPrevious = (i < 1)
