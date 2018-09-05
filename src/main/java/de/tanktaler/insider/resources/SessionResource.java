@@ -234,7 +234,7 @@ public final class SessionResource {
           final List<EnvelopeMapMatch> list = segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
             .map(EnvelopeMapMatch::new)
-            .filter(enhancement -> enhancement.payload().alternatives() < 4)
+            .filter(enhancement -> enhancement.payload().alternatives() == 0)
             .collect(Collectors.toList());
 
           // always inject the first coordinate
