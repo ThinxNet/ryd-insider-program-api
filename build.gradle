@@ -1,16 +1,16 @@
 plugins {
   id 'com.github.johnrengelman.shadow' version '2.0.4'
-  id 'net.ltgt.errorprone' version '0.0.14'
+  id 'net.ltgt.errorprone' version '0.0.16'
 }
 
 ext {
   versions = [
-    checkstyle: '8.10.1',
+    checkstyle: '8.12',
     dropwizard: '1.3.5',
-    geotools: '18.3',
-    gradle: '4.8.1',
+    geotools: '19.2',
+    gradle: '4.10',
     math3: '3.6.1',
-    mongo: '3.8.0',
+    mongo: '3.8.1',
     morphia: '1.3.2'
   ]
 }
