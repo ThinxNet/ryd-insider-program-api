@@ -15,7 +15,7 @@ ext {
   ]
 }
 
-group 'de.tanktaler.insider'
+group 'one.ryd.insider'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'application'
@@ -25,7 +25,7 @@ apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'net.ltgt.errorprone'
 
-mainClassName = 'de.tanktaler.insider.ApiApplication'
+mainClassName = 'one.ryd.insider.ApiApplication'
 sourceCompatibility = 1.8
 
 repositories {
