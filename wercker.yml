@@ -36,16 +36,16 @@ deploy:
     - script:
       name: sending files
       code: |-
-        rsync -arz "$WERCKER_SOURCE_DIR/" "insider@185.201.144.128:/opt/insider/tanktaler-insider-program-api_${WERCKER_GIT_COMMIT}"
-        ssh insider@185.201.144.128 "rm -rf /opt/insider/tanktaler-insider-program-api_backup"
-        ssh insider@185.201.144.128 "cd /opt/insider; mv tanktaler-insider-program-api tanktaler-insider-program-api_backup && mv tanktaler-insider-program-api_${WERCKER_GIT_COMMIT} tanktaler-insider-program-api"
+        rsync -arz "$WERCKER_SOURCE_DIR/" "insider@185.201.144.128:/opt/insider/ryd-insider-program-api_${WERCKER_GIT_COMMIT}"
+        ssh insider@185.201.144.128 "rm -rf /opt/insider/ryd-insider-program-api_backup"
+        ssh insider@185.201.144.128 "cd /opt/insider; mv ryd-insider-program-api ryd-insider-program-api_backup && mv ryd-insider-program-api_${WERCKER_GIT_COMMIT} ryd-insider-program-api"
 
     - script:
       name: killing the application
       code: |-
-        ssh insider@185.201.144.128 "ps -ef | grep 'tanktaler-insider-program-api' | grep -v grep | awk '{print \$2}' | xargs kill -9 &> /dev/null || true"
+        ssh insider@185.201.144.128 "ps -ef | grep 'ryd-insider-program-api' | grep -v grep | awk '{print \$2}' | xargs kill -9 &> /dev/null || true"
 
     - script:
       name: starting a new application
       code: |-
-        ssh insider@185.201.144.128 "cd /opt/insider/tanktaler-insider-program-api && exec java -jar *.jar server ~/tanktaler-insider-program-api/application.yml >> /tmp/tanktaler-insider-program-api.log 2>&1 </dev/null &"
+        ssh insider@185.201.144.128 "cd /opt/insider/ryd-insider-program-api && exec java -jar *.jar server ~/ryd-insider-program-api/application.yml >> /tmp/ryd-insider-program-api.log 2>&1 </dev/null &"
