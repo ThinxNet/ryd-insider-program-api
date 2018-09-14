@@ -20,14 +20,18 @@ import one.ryd.insider.models.session.embedded.MapWayAddress;
 import one.ryd.insider.models.session.embedded.MapWayTag;
 import java.time.Instant;
 import java.util.List;
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 
+// do not specify indexes here
 @Entity(value = "ip_map_ways", noClassnameStored = true)
 public final class MapWay {
   @Id
-  private Long id;
+  private ObjectId id;
+
+  private Long osmId;
 
   private Instant createdAt;
 
@@ -43,12 +47,12 @@ public final class MapWay {
 
   private Long timestamp;
 
-  public Long getId() {
+  public ObjectId getId() {
     return this.id;
   }
 
-  public void setId(Long id) {
-    this.id = id;
+  public Long getOsmId() {
+    return this.osmId;
   }
 
   public List<MapWayTag> getTags() {

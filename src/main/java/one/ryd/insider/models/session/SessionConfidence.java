@@ -21,6 +21,7 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 
+// do not specify indexes here
 @Entity(value = "ip_session_confidence", noClassnameStored = true)
 public final class SessionConfidence {
   @Id

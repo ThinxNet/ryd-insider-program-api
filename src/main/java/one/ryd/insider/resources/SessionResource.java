@@ -141,7 +141,7 @@ public final class SessionResource {
       .map(EnvelopeMapWay::new)
       .map(way -> {
         final MapWay entity = this.dsSession.createQuery(MapWay.class)
-          .field("_id").equal(way.payload().id())
+          .field("osmId").equal(way.payload().id())
           .field("timestamp").equal(way.payload().timestamp()) // timestamp of the way
           .project("geometry", true)
           .project("tags", true)
