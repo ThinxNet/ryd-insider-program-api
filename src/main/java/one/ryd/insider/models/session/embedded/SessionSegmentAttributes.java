@@ -47,7 +47,7 @@ public final class SessionSegmentAttributes {
     return this.gpsSpeedKmH;
   }
 
-  public Integer obdMaxSpeedKmH() {
+  public Integer getObdMaxSpeedKmH() {
     return this.obdMaxSpeedKmH;
   }
 }
