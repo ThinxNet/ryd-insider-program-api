@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -181,7 +180,7 @@ public final class SessionResource {
   public Response segments(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id,
-    @DefaultValue("gps") @QueryParam("source") final String source
+    @DefaultValue("geo") @QueryParam("source") final String source
   ) {
     final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
     if (Objects.isNull(session)) {
