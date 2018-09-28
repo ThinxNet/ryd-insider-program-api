@@ -17,9 +17,9 @@
 package one.ryd.insider.models.session;
 
 import com.mongodb.DBObject;
-import one.ryd.insider.models.Model;
 import java.time.Instant;
 import java.util.List;
+import one.ryd.insider.models.Model;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;

@@ -16,8 +16,8 @@
 
 package one.ryd.insider.core.auth;
 
-import one.ryd.insider.models.user.User;
 import io.dropwizard.auth.PrincipalImpl;
+import one.ryd.insider.models.user.User;
 
 public final class InsiderAuthPrincipal extends PrincipalImpl {
   private final User entity;

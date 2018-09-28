@@ -16,10 +16,10 @@
 
 package one.ryd.insider.core.auth;
 
-import one.ryd.insider.models.user.User;
 import io.dropwizard.auth.Authenticator;
 import java.util.Objects;
 import java.util.Optional;
+import one.ryd.insider.models.user.User;
 import org.mongodb.morphia.Datastore;
 
 public final class InsiderTokenAuthenticator

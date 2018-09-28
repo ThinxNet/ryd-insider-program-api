@@ -16,8 +16,8 @@
 
 package one.ryd.insider.models.session.embedded.envelope;
 
-import one.ryd.insider.models.session.embedded.SegmentTypedEnvelope;
 import java.time.Instant;
+import one.ryd.insider.models.session.embedded.SegmentTypedEnvelope;
 import org.bson.Document;
 import org.mongodb.morphia.annotations.Embedded;
 

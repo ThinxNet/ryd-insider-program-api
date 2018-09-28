@@ -16,11 +16,11 @@
 
 package one.ryd.insider.models.session;
 
+import java.time.Instant;
+import java.util.List;
 import one.ryd.insider.models.Model;
 import one.ryd.insider.models.session.embedded.SegmentTypedEnvelope;
 import one.ryd.insider.models.session.embedded.SessionSegmentAttributes;
-import java.time.Instant;
-import java.util.List;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;

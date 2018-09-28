@@ -20,7 +20,10 @@ import java.time.Instant;
 
 public interface Envelope<T> {
   Instant timestamp();
+
   Integer version();
+
   String type();
+
   T payload();
 }

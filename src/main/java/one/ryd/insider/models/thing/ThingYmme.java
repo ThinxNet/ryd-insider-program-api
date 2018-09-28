@@ -17,6 +17,7 @@
 package one.ryd.insider.models.thing;
 
 import org.mongodb.morphia.annotations.Embedded;
+import org.mongodb.morphia.annotations.Property;
 
 @Embedded
 public final class ThingYmme {
@@ -26,8 +27,10 @@ public final class ThingYmme {
   private String model;
   private String modelType;
   private String vehicleId;
-  private String VIN;
   private String year;
+
+  @Property("VIN")
+  private String vin;
 
   public String getColor() {
     return this.color;
@@ -53,11 +56,11 @@ public final class ThingYmme {
     return this.vehicleId;
   }
 
-  public String getVIN() {
-    return this.VIN;
-  }
-
   public String getYear() {
     return this.year;
+  }
+
+  public String getVin() {
+    return this.vin;
   }
 }

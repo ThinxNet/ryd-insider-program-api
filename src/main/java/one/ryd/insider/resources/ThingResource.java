@@ -16,9 +16,6 @@
 
 package one.ryd.insider.resources;
 
-import one.ryd.insider.core.auth.InsiderAuthPrincipal;
-import one.ryd.insider.core.response.InsiderEnvelop;
-import one.ryd.insider.models.thing.Thing;
 import io.dropwizard.auth.Auth;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -28,6 +25,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import one.ryd.insider.core.auth.InsiderAuthPrincipal;
+import one.ryd.insider.core.response.InsiderEnvelop;
+import one.ryd.insider.models.thing.Thing;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;

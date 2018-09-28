@@ -16,10 +16,10 @@
 
 package one.ryd.insider.models.session;
 
-import one.ryd.insider.models.session.embedded.MapWayAddress;
-import one.ryd.insider.models.session.embedded.MapWayTag;
 import java.time.Instant;
 import java.util.List;
+import one.ryd.insider.models.session.embedded.MapWayAddress;
+import one.ryd.insider.models.session.embedded.MapWayTag;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;

@@ -17,8 +17,8 @@
 package one.ryd.insider.models.session.embedded;
 
 import com.mongodb.BasicDBObject;
-import one.ryd.insider.models.session.embedded.envelope.Envelope;
 import java.time.Instant;
+import one.ryd.insider.models.session.embedded.envelope.Envelope;
 import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded

@@ -16,9 +16,9 @@
 
 package one.ryd.insider.models.thing;
 
+import java.util.List;
 import one.ryd.insider.models.CustomEntityRelation;
 import one.ryd.insider.models.Model;
-import java.util.List;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;

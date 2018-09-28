@@ -18,10 +18,10 @@ package one.ryd.insider.models.session.embedded.envelope;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
-import one.ryd.insider.models.session.embedded.SegmentTypedEnvelope;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
+import one.ryd.insider.models.session.embedded.SegmentTypedEnvelope;
 import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded

@@ -17,11 +17,6 @@
 package one.ryd.insider.resources;
 
 import com.mongodb.BasicDBList;
-import one.ryd.insider.core.auth.InsiderAuthPrincipal;
-import one.ryd.insider.core.response.InsiderEnvelop;
-import one.ryd.insider.models.session.SessionSummary;
-import one.ryd.insider.models.session.aggregation.ActivityDto;
-import one.ryd.insider.models.thing.Thing;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
 import java.time.Instant;
@@ -35,6 +30,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import one.ryd.insider.core.auth.InsiderAuthPrincipal;
+import one.ryd.insider.core.response.InsiderEnvelop;
+import one.ryd.insider.models.session.SessionSummary;
+import one.ryd.insider.models.session.aggregation.ActivityDto;
+import one.ryd.insider.models.thing.Thing;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
