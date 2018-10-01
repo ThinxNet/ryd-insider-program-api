@@ -236,7 +236,7 @@ public final class SessionResource {
             }
 
             final Integer maxSpeedKmH = Integer.valueOf(maxSpeed);
-            if (fieldValue < 5 || maxSpeedKmH > fieldValue) {
+            if (Objects.isNull(fieldValue) || fieldValue < 5 || maxSpeedKmH > fieldValue) {
               return null;
             }
 
