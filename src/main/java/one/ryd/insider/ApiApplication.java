@@ -61,11 +61,11 @@ public final class ApiApplication extends Application<ApiConfiguration> {
       .addFilter("CrossOriginFilter", CrossOriginFilter.class);
     filter.setInitParameter(
       CrossOriginFilter.ALLOWED_ORIGINS_PARAM,
-      "http://localhost:*,https://insider.thinxcloud-staging.de"
+      configuration.getApi().getCors().getAllowedOrigins()
     );
     filter.setInitParameter(
       CrossOriginFilter.ALLOWED_HEADERS_PARAM,
-      "Authorization,X-Requested-With,X-Txn-Auth-Token,Content-Type,Accept,Origin"
+      configuration.getApi().getCors().getAllowedHeaders()
     );
     filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "*");
 

@@ -16,11 +16,11 @@
 
 package one.ryd.insider;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.MongoClientURI;
 import io.dropwizard.Configuration;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 public final class ApiConfiguration extends Configuration {
   @NotNull
@@ -31,38 +31,56 @@ public final class ApiConfiguration extends Configuration {
   @Valid
   private Database dbSession;
 
-  @JsonProperty("db_insider")
-  public void setDbInsider(final Database dbInsider) {
-    this.dbInsider = dbInsider;
-  }
+  @NotNull
+  @Valid
+  private Api api;
 
-  @JsonProperty("db_insider")
   public Database getDbInsider() {
     return this.dbInsider;
   }
 
-  @JsonProperty("db_session")
-  public void setDbSession(final Database dbSession) {
-    this.dbSession = dbSession;
-  }
-
-  @JsonProperty("db_session")
   public Database getDbSession() {
     return this.dbSession;
+  }
+
+  public Api getApi() {
+    return this.api;
   }
 
   public static class Database {
     @NotNull
     private MongoClientURI uri;
 
-    @JsonProperty("uri")
-    public void setUri(final String uri) {
-      this.uri = new MongoClientURI(uri);
-    }
-
-    @JsonProperty("uri")
     public MongoClientURI getUri() {
       return this.uri;
+    }
+  }
+
+  public static class Api {
+    @NotNull
+    @Valid
+    private Cors cors;
+
+    public Cors getCors() {
+      return this.cors;
+    }
+  }
+
+  public static class Cors {
+    @NotNull
+    @Size(min=1)
+    private String allowedOrigins;
+
+    @NotNull
+    @Size(min=1)
+    private String allowedHeaders;
+
+    public String getAllowedOrigins() {
+      return this.allowedOrigins;
+    }
+
+    public String getAllowedHeaders() {
+      return this.allowedHeaders;
     }
   }
 }

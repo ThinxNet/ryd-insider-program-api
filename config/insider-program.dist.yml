@@ -3,8 +3,13 @@ server:
     - type: http
       port: 8090
 
-db_insider:
+dbInsider:
   uri: "mongodb://localhost:27017/insider_program"
 
-db_session:
+dbSession:
   uri: "mongodb://localhost:27017/insider_program"
+
+api:
+  cors:
+    allowedOrigins: "http://localhost:*,https://example.domain"
+    allowedHeaders: "Authorization,X-Requested-With,X-Txn-Auth-Token,Content-Type,Accept,Origin"
