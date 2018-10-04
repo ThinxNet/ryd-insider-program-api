@@ -38,7 +38,7 @@ public final class MongoManaged implements Managed {
   public void stop() throws Exception {
     try {
       this.instance.close();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new Exception("Unable to close the mongo connection", e);
     }
   }
