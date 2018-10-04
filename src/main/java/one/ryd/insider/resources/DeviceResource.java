@@ -43,7 +43,7 @@ import org.mongodb.morphia.aggregation.Group;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class DeviceResource {
-  // @todo! move it to validators
+  // @todo #7:30min move out dsInsider and dsSession objects
   private final Datastore dsInsider;
   private final Datastore dsSession;
 

@@ -46,7 +46,6 @@ import org.mongodb.morphia.query.Sort;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class StatisticsResource {
-  // @todo! move it to validators
   private final Datastore dsInsider;
   private final Datastore dsSession;
 

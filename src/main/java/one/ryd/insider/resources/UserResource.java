@@ -51,13 +51,13 @@ public final class UserResource {
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id
   ) {
-    // @todo! incorrect
+    // @todo #7:30m account owner must be able to view own users
     return this.datastore.get(User.class, user.entity().getId());
   }
 
   @GET
   public List<User> fetchAll(@Auth final InsiderAuthPrincipal user) {
-    // @todo! incorrect
+    // @todo #7:30m re-factor the user-listing endpoint
     return this.datastore.createQuery(User.class)
       .filter("_id", user.entity().getId()).asList();
   }

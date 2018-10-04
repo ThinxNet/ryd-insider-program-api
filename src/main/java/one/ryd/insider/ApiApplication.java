@@ -54,6 +54,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
 
   @Override
   public void run(final ApiConfiguration configuration, final Environment environment) {
+    // @todo #7:15min move the morphia instance to a separate bundle
     final Morphia morphia = new Morphia();
     morphia.getMapper().getOptions().setStoreEmpties(true);
     morphia.getMapper().getOptions().setStoreNulls(true);
@@ -66,7 +67,6 @@ public final class ApiApplication extends Application<ApiConfiguration> {
       }
     });
 
-    // @todo! move these to a bundle
     final MongoClientURI dsInsiderUri = configuration.getDbInsider().getUri();
     final MongoClientURI dsSessionUri = configuration.getDbSession().getUri();
 

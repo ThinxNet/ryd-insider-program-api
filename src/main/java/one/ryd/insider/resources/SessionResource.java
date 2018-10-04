@@ -67,13 +67,12 @@ import org.mongodb.morphia.aggregation.Projection;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.Sort;
 
-// @todo! split functions by domain
+// @todo #7:1h separate methods by domain
 
 @Path("/sessions")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class SessionResource {
-  // @todo! move it to validators
   private final Datastore dsInsider;
   private final Datastore dsSession;
 
