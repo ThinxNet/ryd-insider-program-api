@@ -277,9 +277,9 @@ public final class SessionResource {
       .map(EnvelopeDeviceEvent::new)
       .forEachOrdered(entry ->
         events.addObject()
-          .put("type", entry.type())
-          .put("timestamp", entry.timestamp().toEpochMilli())
-          .set("payload", json.pojoNode(entry.payload()))
+        .put("type", entry.type())
+        .put("timestamp", entry.timestamp().toEpochMilli())
+        .set("payload", json.pojoNode(entry.payload()))
       );
 
     return Response.ok(new InsiderEnvelop(events)).build();

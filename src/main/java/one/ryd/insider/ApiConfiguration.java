@@ -68,11 +68,11 @@ public final class ApiConfiguration extends Configuration {
 
   public static class Cors {
     @NotNull
-    @Size(min=1)
+    @Size(min = 1)
     private String allowedOrigins;
 
     @NotNull
-    @Size(min=1)
+    @Size(min = 1)
     private String allowedHeaders;
 
     public String getAllowedOrigins() {
