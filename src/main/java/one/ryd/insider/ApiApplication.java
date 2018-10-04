@@ -23,9 +23,7 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import java.util.EnumSet;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
+import one.ryd.insider.bundles.cors.CorsBundle;
 import one.ryd.insider.core.MongoHealthCheck;
 import one.ryd.insider.core.MongoManaged;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
@@ -38,7 +36,6 @@ import one.ryd.insider.resources.SessionResource;
 import one.ryd.insider.resources.StatisticsResource;
 import one.ryd.insider.resources.ThingResource;
 import one.ryd.insider.resources.UserResource;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.mongodb.morphia.Datastore;
@@ -51,24 +48,12 @@ public final class ApiApplication extends Application<ApiConfiguration> {
 
   @Override
   public void initialize(final Bootstrap<ApiConfiguration> bootstrap) {
+    bootstrap.addBundle(new CorsBundle());
     bootstrap.getObjectMapper().registerModule(new InsiderModule());
   }
 
   @Override
   public void run(final ApiConfiguration configuration, final Environment environment) {
-    // @todo! remove it
-    FilterRegistration.Dynamic filter = environment.servlets()
-      .addFilter("CrossOriginFilter", CrossOriginFilter.class);
-    filter.setInitParameter(
-      CrossOriginFilter.ALLOWED_ORIGINS_PARAM,
-      configuration.getApi().getCors().getAllowedOrigins()
-    );
-    filter.setInitParameter(
-      CrossOriginFilter.ALLOWED_HEADERS_PARAM,
-      configuration.getApi().getCors().getAllowedHeaders()
-    );
-    filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, "*");
-
     final Morphia morphia = new Morphia();
     morphia.getMapper().getOptions().setStoreEmpties(true);
     morphia.getMapper().getOptions().setStoreNulls(true);
