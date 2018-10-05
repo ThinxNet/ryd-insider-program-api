@@ -35,6 +35,9 @@ public class User implements Model {
   private ObjectId account;
 
   @Embedded
+  private List<CustomEntityRelation> accounts;
+
+  @Embedded
   private List<CustomEntityRelation> things;
 
   @Property("auth_tokens")
@@ -46,6 +49,10 @@ public class User implements Model {
 
   public String getEmail() {
     return this.email;
+  }
+
+  public List<CustomEntityRelation> getAccounts() {
+    return this.accounts;
   }
 
   public List<CustomEntityRelation> getThings() {

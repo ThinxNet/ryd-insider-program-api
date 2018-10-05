@@ -34,7 +34,9 @@ public final class InsiderTokenAuthFilter<P extends Principal> extends AuthFilte
   public void filter(final ContainerRequestContext requestContext) throws IOException {
     final String token = requestContext.getHeaderString("x-txn-auth-token");
     if (!this.authenticate(requestContext, token, "token")) {
-      throw new WebApplicationException(unauthorizedHandler.buildResponse("CHANGE", "ME"));
+      throw new WebApplicationException(
+        unauthorizedHandler.buildResponse("Token", "ryd-insider-program-api")
+      );
     }
   }
 }
