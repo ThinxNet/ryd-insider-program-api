@@ -17,6 +17,7 @@
 package one.ryd.insider.resources;
 
 import io.dropwizard.auth.Auth;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -29,7 +30,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.core.response.InsiderEnvelop;
+import one.ryd.insider.models.CustomEntityRelation;
 import one.ryd.insider.models.account.Account;
+import one.ryd.insider.models.account.AccountRole;
+import one.ryd.insider.models.user.User;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 
@@ -45,7 +49,6 @@ public final class AccountResource {
 
   @GET
   @Path("/{id}")
-  @Produces(MediaType.APPLICATION_JSON)
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id
@@ -64,15 +67,48 @@ public final class AccountResource {
   }
 
   @GET
+  @Path("/{id}/users")
+  public Response fetchUsersAll(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id
+  ) {
+    final List<ObjectId> list = this.accountIds(user);
+    if (!list.contains(id)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
+    final Account account = this.datastore.get(Account.class, id);
+    if (Objects.isNull(account)) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    final List<User> users = this.datastore
+      .get(
+        User.class,
+        account.getUsers().stream()
+          .map(CustomEntityRelation::getId).collect(Collectors.toList())
+      )
+      .asList();
+
+    return Response.ok(new InsiderEnvelop(users)).build();
+  }
+
+  @GET
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
-    final List<Account> accounts = this.datastore.createQuery(Account.class)
-      .field("_id").in(this.accountIds(user))
+    final List<Account> accounts = this.datastore
+      .get(Account.class, this.accountIds(user))
       .asList();
     return Response.ok(new InsiderEnvelop(accounts)).build();
   }
 
   private List<ObjectId> accountIds(final InsiderAuthPrincipal user) {
     return user.entity().getAccounts().stream()
-      .map(entry -> entry.getId()).collect(Collectors.toList());
+      .filter(entry ->
+        Arrays
+          .asList(AccountRole.ACCOUNT_OWNER.toString(), AccountRole.ACCOUNT_VIEWER.toString())
+          .contains(entry.getRole())
+      )
+      .map(CustomEntityRelation::getId)
+      .collect(Collectors.toList());
   }
 }

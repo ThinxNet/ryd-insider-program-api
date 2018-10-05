@@ -17,5 +17,7 @@
 package one.ryd.insider.models.account;
 
 public enum AccountRole {
-  ACCOUNT_OWNER
+  ACCOUNT_OWNER,
+  ACCOUNT_USER,
+  ACCOUNT_VIEWER
 }

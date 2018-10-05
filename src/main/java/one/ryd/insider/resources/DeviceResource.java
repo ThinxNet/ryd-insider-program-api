@@ -31,6 +31,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.core.response.InsiderEnvelop;
+import one.ryd.insider.models.CustomEntityRelation;
 import one.ryd.insider.models.device.Device;
 import one.ryd.insider.models.session.SessionConfidence;
 import one.ryd.insider.models.session.aggregation.DeviceConfidenceDto;
@@ -76,7 +77,10 @@ public final class DeviceResource {
     final BasicDBList result = new BasicDBList();
 
     this.dsSession.createAggregation(SessionConfidence.class)
-      .match(this.dsSession.createQuery(SessionConfidence.class).field("device").equal(id))
+      .match(
+        this.dsSession.createQuery(SessionConfidence.class)
+          .field("device").equal(id)
+      )
       .group(
         Group.grouping("_id", "target"),
         Group.grouping("confidence", Group.average("confidence")),
@@ -93,9 +97,14 @@ public final class DeviceResource {
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
     return Response.ok(
       new InsiderEnvelop(
-        this.dsInsider.createQuery(Device.class).field("thing").in(
-          user.entity().getThings().stream().map(e -> e.getId()).collect(Collectors.toSet())
-        ).asList().stream().map(this.morphia::toDBObject).toArray()
+        this.dsInsider.createQuery(Device.class)
+          .field("thing").in(
+            user.entity().getThings().stream()
+              .map(CustomEntityRelation::getId)
+              .collect(Collectors.toSet())
+          )
+          .asList().stream()
+          .map(this.morphia::toDBObject).toArray()
       )
     ).build();
   }

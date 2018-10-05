@@ -99,7 +99,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.jersey().register(new SessionResource(dsInsider, dsSession));
     environment.jersey().register(new StatisticsResource(dsInsider, dsSession));
     environment.jersey().register(new ThingResource(dsInsider));
-    environment.jersey().register(new UserResource(dsInsider));
+    //environment.jersey().register(new UserResource(dsInsider));
   }
 
   @Override
