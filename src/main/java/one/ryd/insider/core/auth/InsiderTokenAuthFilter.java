@@ -27,6 +27,8 @@ public final class InsiderTokenAuthFilter<P extends Principal> extends AuthFilte
   // final Authorizer<P> authorizer
   public InsiderTokenAuthFilter(final Authenticator<String, P> authenticator) {
     super.authenticator = authenticator;
+    super.prefix = "Token";
+    super.realm = "ryd-insider-program-api";
     //this.authorizer = authorizer;
   }
 
@@ -35,7 +37,7 @@ public final class InsiderTokenAuthFilter<P extends Principal> extends AuthFilte
     final String token = requestContext.getHeaderString("x-txn-auth-token");
     if (!this.authenticate(requestContext, token, "token")) {
       throw new WebApplicationException(
-        unauthorizedHandler.buildResponse("Token", "ryd-insider-program-api")
+        unauthorizedHandler.buildResponse(super.prefix, super.realm)
       );
     }
   }

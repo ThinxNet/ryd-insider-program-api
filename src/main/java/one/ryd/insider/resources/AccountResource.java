@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -41,11 +42,8 @@ import org.mongodb.morphia.Datastore;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class AccountResource {
-  private final Datastore datastore;
-
-  public AccountResource(final Datastore datastore) {
-    this.datastore = datastore;
-  }
+  @Inject
+  private Datastore dsInsider;
 
   @GET
   @Path("/{id}")
@@ -58,7 +56,7 @@ public final class AccountResource {
       return Response.status(Response.Status.FORBIDDEN).build();
     }
 
-    final Account account = this.datastore.get(Account.class, id);
+    final Account account = this.dsInsider.get(Account.class, id);
     if (Objects.isNull(account)) {
       return Response.status(Response.Status.NOT_FOUND).build();
     }
@@ -77,12 +75,12 @@ public final class AccountResource {
       return Response.status(Response.Status.FORBIDDEN).build();
     }
 
-    final Account account = this.datastore.get(Account.class, id);
+    final Account account = this.dsInsider.get(Account.class, id);
     if (Objects.isNull(account)) {
       return Response.status(Response.Status.NOT_FOUND).build();
     }
 
-    final List<User> users = this.datastore
+    final List<User> users = this.dsInsider
       .get(
         User.class,
         account.getUsers().stream()
@@ -95,7 +93,7 @@ public final class AccountResource {
 
   @GET
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
-    final List<Account> accounts = this.datastore
+    final List<Account> accounts = this.dsInsider
       .get(Account.class, this.accountIds(user))
       .asList();
     return Response.ok(new InsiderEnvelop(accounts)).build();

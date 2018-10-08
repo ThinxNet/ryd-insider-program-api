@@ -35,7 +35,6 @@ import one.ryd.insider.resources.DeviceResource;
 import one.ryd.insider.resources.SessionResource;
 import one.ryd.insider.resources.StatisticsResource;
 import one.ryd.insider.resources.ThingResource;
-import one.ryd.insider.resources.UserResource;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.mongodb.morphia.Datastore;
@@ -60,13 +59,6 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     morphia.getMapper().getOptions().setStoreNulls(true);
     morphia.mapPackage("one.ryd.insider.models");
 
-    environment.jersey().register(new AbstractBinder() {
-      @Override
-      protected void configure() {
-        bind(morphia).to(Morphia.class);
-      }
-    });
-
     final MongoClientURI dsInsiderUri = configuration.getDbInsider().getUri();
     final MongoClientURI dsSessionUri = configuration.getDbSession().getUri();
 
@@ -75,6 +67,15 @@ public final class ApiApplication extends Application<ApiConfiguration> {
 
     final Datastore dsInsider = morphia.createDatastore(mongoInsider, dsInsiderUri.getDatabase());
     final Datastore dsSession = morphia.createDatastore(mongoSession, dsSessionUri.getDatabase());
+
+    environment.jersey().register(new AbstractBinder() {
+      @Override
+      protected void configure() {
+        bind(dsInsider).to(Datastore.class).named("dsInsider");
+        bind(dsSession).to(Datastore.class).named("dsSession");
+        bind(morphia).to(Morphia.class);
+      }
+    });
 
     environment.lifecycle().manage(new MongoManaged(mongoInsider, dsInsider));
     environment.lifecycle().manage(new MongoManaged(mongoSession, dsSession));
@@ -90,11 +91,12 @@ public final class ApiApplication extends Application<ApiConfiguration> {
       )
     );
 
-    environment.jersey().register(RolesAllowedDynamicFeature.class);
     environment.jersey().register(
       new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class)
     );
-    environment.jersey().register(new AccountResource(dsInsider));
+    environment.jersey().register(RolesAllowedDynamicFeature.class);
+
+    environment.jersey().register(AccountResource.class);
     environment.jersey().register(new DeviceResource(dsInsider, dsSession));
     environment.jersey().register(new SessionResource(dsInsider, dsSession));
     environment.jersey().register(new StatisticsResource(dsInsider, dsSession));
