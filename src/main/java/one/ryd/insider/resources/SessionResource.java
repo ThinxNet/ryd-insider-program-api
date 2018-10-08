@@ -73,16 +73,14 @@ import org.mongodb.morphia.query.Sort;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class SessionResource {
-  private final Datastore dsInsider;
-  private final Datastore dsSession;
+  @Inject
+  private Datastore dsInsider;
+
+  @Inject
+  private Datastore dsSession;
 
   @Inject
   private Morphia morphia;
-
-  public SessionResource(final Datastore dsInsider, final Datastore dsSession) {
-    this.dsInsider = dsInsider;
-    this.dsSession = dsSession;
-  }
 
   @GET
   @Path("/{id}")

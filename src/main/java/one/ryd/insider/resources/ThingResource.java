@@ -36,14 +36,11 @@ import org.mongodb.morphia.Morphia;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class ThingResource {
-  private final Datastore datastore;
+  @Inject
+  private Datastore dsInsider;
 
   @Inject
   private Morphia morphia;
-
-  public ThingResource(final Datastore datastore) {
-    this.datastore = datastore;
-  }
 
   @GET
   @Path("/{id}")
@@ -51,7 +48,7 @@ public final class ThingResource {
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final ObjectId id
   ) {
-    return this.datastore.createQuery(Thing.class)
+    return this.dsInsider.createQuery(Thing.class)
       .field("users.id").equal(user.entity().getId())
       .field("_id").equal(id).get();
   }
@@ -60,7 +57,7 @@ public final class ThingResource {
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
     return Response
       .ok(new InsiderEnvelop(
-        this.datastore.createQuery(Thing.class)
+        this.dsInsider.createQuery(Thing.class)
           .field("users.id").equal(user.entity().getId())
           .asList().stream().map(this.morphia::toDBObject).toArray()
         )

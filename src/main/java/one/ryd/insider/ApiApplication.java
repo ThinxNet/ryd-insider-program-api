@@ -97,10 +97,10 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.jersey().register(RolesAllowedDynamicFeature.class);
 
     environment.jersey().register(AccountResource.class);
-    environment.jersey().register(new DeviceResource(dsInsider, dsSession));
-    environment.jersey().register(new SessionResource(dsInsider, dsSession));
-    environment.jersey().register(new StatisticsResource(dsInsider, dsSession));
-    environment.jersey().register(new ThingResource(dsInsider));
+    environment.jersey().register(DeviceResource.class);
+    environment.jersey().register(SessionResource.class);
+    environment.jersey().register(StatisticsResource.class);
+    environment.jersey().register(ThingResource.class);
     //environment.jersey().register(new UserResource(dsInsider));
   }
 

@@ -44,14 +44,11 @@ import org.mongodb.morphia.aggregation.Group;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class DeviceResource {
-  // @todo #7:30min move out dsInsider and dsSession objects
-  private final Datastore dsInsider;
-  private final Datastore dsSession;
+  @Inject
+  private Datastore dsInsider;
 
-  public DeviceResource(final Datastore dsInsider, final Datastore dsSession) {
-    this.dsInsider = dsInsider;
-    this.dsSession = dsSession;
-  }
+  @Inject
+  private Datastore dsSession;
 
   @Inject
   private Morphia morphia;
