@@ -16,9 +16,7 @@
 
 package one.ryd.insider.resources;
 
-import com.mongodb.AggregationOptions;
 import com.mongodb.BasicDBList;
-import com.mongodb.ReadPreference;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
 import java.util.List;
@@ -46,7 +44,6 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.aggregation.Group;
-import org.mongodb.morphia.query.FindOptions;
 
 @Path("/devices")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -76,7 +73,7 @@ public final class DeviceResource {
 
     final Device device = this.dsInsider.createQuery(Device.class)
       .field("_id").equal(id)
-      .get((new FindOptions()).readPreference(ReadPreference.secondaryPreferred()));
+      .get();
     if (Objects.isNull(device)) {
       return Response.status(Response.Status.NOT_FOUND).build();
     }
@@ -109,11 +106,7 @@ public final class DeviceResource {
         Group.grouping("score", Group.average("score")),
         Group.grouping("sampleSize", Group.max("sampleSize"))
       )
-      .aggregate(
-        DeviceConfidenceDto.class,
-        AggregationOptions.builder().build(),
-        ReadPreference.secondaryPreferred()
-      )
+      .aggregate(DeviceConfidenceDto.class)
       .forEachRemaining(result::add);
 
     return Response.ok(new InsiderEnvelop(result)).build();
@@ -125,7 +118,7 @@ public final class DeviceResource {
       new InsiderEnvelop(
         this.dsInsider.createQuery(Device.class)
           .field("thing").in(this.thingIds(user))
-          .asList((new FindOptions()).readPreference(ReadPreference.secondaryPreferred())).stream()
+          .asList().stream()
           .map(this.morphia::toDBObject).toArray()
       )
     ).build();
@@ -135,7 +128,7 @@ public final class DeviceResource {
     return this.dsInsider.createQuery(Device.class)
       .field("thing").in(thingIds)
       .project("_id", true)
-      .asList((new FindOptions()).readPreference(ReadPreference.secondaryPreferred())).stream()
+      .asList().stream()
       .map(Device::getId)
       .collect(Collectors.toList());
   }
