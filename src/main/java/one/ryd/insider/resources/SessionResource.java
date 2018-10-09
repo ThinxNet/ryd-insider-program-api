@@ -593,7 +593,7 @@ public final class SessionResource {
       .ok(
         new InsiderEnvelop(
           query
-            .field("incomplete").equal(false)
+            //.field("incomplete").equal(false)
             .order(Sort.descending("end"))
             .asList().stream().map(this.morphia::toDBObject).toArray()
         )

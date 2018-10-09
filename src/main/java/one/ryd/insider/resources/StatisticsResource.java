@@ -76,7 +76,7 @@ public final class StatisticsResource {
       .match(
         this.dsInsider.createQuery(SessionSummary.class)
           .field("device").equal(thing.getDevice())
-          .field("incomplete").equal(false)
+          //.field("incomplete").equal(false)
           .field("timestamp").greaterThanOrEq(timestamp)
       )
       .sort(Sort.descending("end"))
