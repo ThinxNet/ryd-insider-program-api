@@ -71,8 +71,10 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.jersey().register(new AbstractBinder() {
       @Override
       protected void configure() {
-        bind(dsInsider).to(Datastore.class).named("dsInsider");
-        bind(dsSession).to(Datastore.class).named("dsSession");
+        bind(dsInsider).to(Datastore.class).proxy(true).proxyForSameScope(false)
+          .named("datastoreInsider");
+        bind(dsSession).to(Datastore.class).proxy(true).proxyForSameScope(false)
+          .named("datastoreSession");
         bind(morphia).to(Morphia.class);
       }
     });

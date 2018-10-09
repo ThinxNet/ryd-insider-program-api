@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -74,9 +75,11 @@ import org.mongodb.morphia.query.Sort;
 @Produces(MediaType.APPLICATION_JSON)
 public final class SessionResource {
   @Inject
+  @Named("datastoreInsider")
   private Datastore dsInsider;
 
   @Inject
+  @Named("datastoreSession")
   private Datastore dsSession;
 
   @Inject

@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -47,9 +48,11 @@ import org.mongodb.morphia.query.Sort;
 @Produces(MediaType.APPLICATION_JSON)
 public final class StatisticsResource {
   @Inject
+  @Named("datastoreInsider")
   private Datastore dsInsider;
 
   @Inject
+  @Named("datastoreSession")
   private Datastore dsSession;
 
   @Inject

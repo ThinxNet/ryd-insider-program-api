@@ -18,6 +18,7 @@ package one.ryd.insider.resources;
 
 import io.dropwizard.auth.Auth;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -37,6 +38,7 @@ import org.mongodb.morphia.Morphia;
 @Produces(MediaType.APPLICATION_JSON)
 public final class ThingResource {
   @Inject
+  @Named("datastoreInsider")
   private Datastore dsInsider;
 
   @Inject
