@@ -16,7 +16,13 @@
 
 package one.ryd.insider.resources;
 
+import com.mongodb.BasicDBList;
 import io.dropwizard.auth.Auth;
+import io.dropwizard.jersey.caching.CacheControl;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.Consumes;
@@ -28,10 +34,17 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.core.response.InsiderEnvelop;
+import one.ryd.insider.models.CustomEntityRelation;
+import one.ryd.insider.models.device.Device;
+import one.ryd.insider.models.session.SessionConfidence;
+import one.ryd.insider.models.session.aggregation.DeviceConfidenceDto;
 import one.ryd.insider.models.thing.Thing;
+import one.ryd.insider.models.thing.ThingRole;
+import one.ryd.insider.models.thing.ThingType;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
+import org.mongodb.morphia.aggregation.Group;
 
 @Path("/things")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,28 +55,98 @@ public final class ThingResource {
   private Datastore dsInsider;
 
   @Inject
-  private Morphia morphia;
+  @Named("datastoreSession")
+  private Datastore dsSession;
 
-  @GET
-  @Path("/{id}")
-  public Thing fetchOne(
-    @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
-  ) {
-    return this.dsInsider.createQuery(Thing.class)
-      .field("users.id").equal(user.entity().getId())
-      .field("_id").equal(id).get();
-  }
+  @Inject
+  private Morphia morphia;
 
   @GET
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
     return Response
       .ok(new InsiderEnvelop(
         this.dsInsider.createQuery(Thing.class)
-          .field("users.id").equal(user.entity().getId())
+          .field("_id").in(this.thingIds(user))
           .asList().stream().map(this.morphia::toDBObject).toArray()
         )
       )
       .build();
+  }
+
+  @GET
+  @Path("/{id}")
+  public Response fetchOne(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id
+  ) {
+    final List<ObjectId> thingIds = this.thingIds(user);
+    if (!thingIds.contains(id)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
+    final Thing thing = this.dsInsider.get(Thing.class, id);
+
+    return Response.ok(new InsiderEnvelop(this.morphia.toDBObject(thing))).build();
+  }
+
+  @GET
+  @Path("/{id}/device")
+  public Response device(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id
+  ) {
+    final List<ObjectId> thingIds = this.thingIds(user);
+    if (!thingIds.contains(id)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
+    final Device device = this.dsInsider
+      .get(Device.class, this.dsInsider.get(Thing.class, id).getDevice());
+    if (Objects.isNull(device)) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    return Response.ok(new InsiderEnvelop(this.morphia.toDBObject(device))).build();
+  }
+
+  @GET
+  @Path("{id}/device/confidence")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+  public Response deviceConfidence(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("id") final ObjectId id
+  ) {
+    final List<ObjectId> thingIds = this.thingIds(user);
+    if (!thingIds.contains(id)) {
+      return Response.status(Response.Status.FORBIDDEN).build();
+    }
+
+    final BasicDBList result = new BasicDBList();
+
+    this.dsSession.createAggregation(SessionConfidence.class)
+      .match(
+        this.dsSession.createQuery(SessionConfidence.class)
+          .field("device").equal(this.dsInsider.get(Thing.class, id).getDevice())
+      )
+      .group(
+        Group.grouping("_id", "target"),
+        Group.grouping("confidence", Group.average("confidence")),
+        Group.grouping("score", Group.average("score")),
+        Group.grouping("sampleSize", Group.max("sampleSize"))
+      )
+      .aggregate(DeviceConfidenceDto.class)
+      .forEachRemaining(result::add);
+
+    return Response.ok(new InsiderEnvelop(result)).build();
+  }
+
+  private List<ObjectId> thingIds(final InsiderAuthPrincipal user) {
+    return user.entity().getThings().stream()
+      .filter(entry ->
+        entry.getRole().equals(ThingRole.THING_OWNER.toString())
+        && entry.getType().equals(ThingType.CAR.toString())
+      )
+      .map(CustomEntityRelation::getId)
+      .collect(Collectors.toList());
   }
 }

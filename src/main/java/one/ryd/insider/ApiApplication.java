@@ -31,7 +31,6 @@ import one.ryd.insider.core.auth.InsiderTokenAuthFilter;
 import one.ryd.insider.core.auth.InsiderTokenAuthenticator;
 import one.ryd.insider.core.module.InsiderModule;
 import one.ryd.insider.resources.AccountResource;
-import one.ryd.insider.resources.DeviceResource;
 import one.ryd.insider.resources.SessionResource;
 import one.ryd.insider.resources.StatisticsResource;
 import one.ryd.insider.resources.ThingResource;
@@ -99,11 +98,9 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.jersey().register(RolesAllowedDynamicFeature.class);
 
     environment.jersey().register(AccountResource.class);
-    environment.jersey().register(DeviceResource.class);
     environment.jersey().register(SessionResource.class);
     environment.jersey().register(StatisticsResource.class);
     environment.jersey().register(ThingResource.class);
-    //environment.jersey().register(new UserResource(dsInsider));
   }
 
   @Override
