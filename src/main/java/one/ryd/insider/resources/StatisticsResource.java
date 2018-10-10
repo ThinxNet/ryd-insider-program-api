@@ -36,6 +36,7 @@ import one.ryd.insider.core.response.InsiderEnvelop;
 import one.ryd.insider.models.session.SessionSummary;
 import one.ryd.insider.models.session.aggregation.ActivityDto;
 import one.ryd.insider.models.thing.Thing;
+import one.ryd.insider.resources.annotation.ThingOwnedByTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
@@ -59,11 +60,12 @@ public final class StatisticsResource {
   private Morphia morphia;
 
   @GET
-  @Path("/{id}/activity")
+  @Path("/{thingId}/activity")
+  @ThingOwnedByTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("thingId") final ObjectId id
   ) {
     final Thing thing = this.dsInsider.get(Thing.class, id);
     if (Objects.isNull(thing)) {
@@ -75,7 +77,7 @@ public final class StatisticsResource {
 
     this.dsSession.createAggregation(SessionSummary.class)
       .match(
-        this.dsInsider.createQuery(SessionSummary.class)
+        this.dsSession.createQuery(SessionSummary.class)
           .field("device").equal(thing.getDevice())
           .field("incomplete").equal(false)
           .field("timestamp").greaterThanOrEq(timestamp)

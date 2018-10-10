@@ -57,7 +57,7 @@ public class ThingOwnedByTheUserFilter implements ContainerRequestFilter {
 
     final List<ObjectId> thingIds = this.thingIds(entity);
     if (!thingIds.contains(new ObjectId(thingIdStr))) {
-      ctx.abortWith(Response.status(Response.Status.FORBIDDEN).build());
+      ctx.abortWith(Response.status(Response.Status.NOT_FOUND).build());
       return;
     }
   }

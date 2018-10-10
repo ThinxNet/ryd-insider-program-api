@@ -99,7 +99,6 @@ public final class ThingResource {
     if (Objects.isNull(device)) {
       return Response.status(Response.Status.NOT_FOUND).build();
     }
-
     return Response.ok(new InsiderEnvelop(this.morphia.toDBObject(device))).build();
   }
 
