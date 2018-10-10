@@ -18,9 +18,9 @@ package one.ryd.insider.resources;
 
 import com.mongodb.BasicDBList;
 import io.dropwizard.auth.Auth;
-import java.util.List;
+import io.dropwizard.jersey.caching.CacheControl;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.Consumes;
@@ -30,7 +30,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import one.ryd.insider.resources.annotation.ThingOwnedByTheUser;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.core.response.InsiderEnvelop;
 import one.ryd.insider.models.CustomEntityRelation;
@@ -39,7 +38,7 @@ import one.ryd.insider.models.session.SessionConfidence;
 import one.ryd.insider.models.session.aggregation.DeviceConfidenceDto;
 import one.ryd.insider.models.thing.Thing;
 import one.ryd.insider.models.thing.ThingRole;
-import one.ryd.insider.models.thing.ThingType;
+import one.ryd.insider.resources.annotation.ThingOwnedByTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
@@ -65,7 +64,11 @@ public final class ThingResource {
     return Response
       .ok(new InsiderEnvelop(
         this.dsInsider.createQuery(Thing.class)
-          .field("_id").in(this.thingIds(user))
+          .field("users").elemMatch(
+            this.dsInsider.createQuery(CustomEntityRelation.class)
+              .field("id").equal(user.entity().getId())
+              .field("role").equal(ThingRole.THING_OWNER.toString())
+          )
           .asList().stream().map(this.morphia::toDBObject).toArray()
         )
       )
@@ -102,7 +105,7 @@ public final class ThingResource {
 
   @GET
   @Path("{thingId}/device/confidence")
-  //@CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   @ThingOwnedByTheUser
   public Response deviceConfidence(
     @Auth final InsiderAuthPrincipal user,
@@ -125,15 +128,5 @@ public final class ThingResource {
       .forEachRemaining(result::add);
 
     return Response.ok(new InsiderEnvelop(result)).build();
-  }
-
-  private List<ObjectId> thingIds(final InsiderAuthPrincipal user) {
-    return user.entity().getThings().stream()
-      .filter(entry ->
-        entry.getRole().equals(ThingRole.THING_OWNER.toString())
-        && entry.getType().equals(ThingType.CAR.toString())
-      )
-      .map(CustomEntityRelation::getId)
-      .collect(Collectors.toList());
   }
 }
