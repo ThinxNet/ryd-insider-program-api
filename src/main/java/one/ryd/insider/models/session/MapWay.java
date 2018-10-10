@@ -18,6 +18,7 @@ package one.ryd.insider.models.session;
 
 import java.time.Instant;
 import java.util.List;
+import one.ryd.insider.models.Model;
 import one.ryd.insider.models.session.embedded.MapWayAddress;
 import one.ryd.insider.models.session.embedded.MapWayTag;
 import org.bson.types.ObjectId;
@@ -27,7 +28,7 @@ import org.mongodb.morphia.annotations.Id;
 
 // do not specify indexes here
 @Entity(value = "ip_map_ways", noClassnameStored = true)
-public final class MapWay {
+public final class MapWay implements Model {
   @Id
   private ObjectId id;
 

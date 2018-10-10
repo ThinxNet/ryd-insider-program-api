@@ -20,9 +20,12 @@ import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.Authenticator;
 import java.io.IOException;
 import java.security.Principal;
+import javax.annotation.Priority;
+import javax.ws.rs.Priorities;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 
+@Priority(Priorities.AUTHENTICATION)
 public final class InsiderTokenAuthFilter<P extends Principal> extends AuthFilter<String, P> {
   // final Authorizer<P> authorizer
   public InsiderTokenAuthFilter(final Authenticator<String, P> authenticator) {
@@ -37,7 +40,7 @@ public final class InsiderTokenAuthFilter<P extends Principal> extends AuthFilte
     final String token = requestContext.getHeaderString("x-txn-auth-token");
     if (!this.authenticate(requestContext, token, "token")) {
       throw new WebApplicationException(
-        unauthorizedHandler.buildResponse(super.prefix, super.realm)
+        this.unauthorizedHandler.buildResponse(super.prefix, super.realm)
       );
     }
   }

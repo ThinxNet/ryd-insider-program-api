@@ -34,6 +34,7 @@ import one.ryd.insider.resources.AccountResource;
 import one.ryd.insider.resources.SessionResource;
 import one.ryd.insider.resources.StatisticsResource;
 import one.ryd.insider.resources.ThingResource;
+import one.ryd.insider.resources.filter.ThingOwnedByTheUserFilter;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.mongodb.morphia.Datastore;
@@ -92,11 +93,14 @@ public final class ApiApplication extends Application<ApiConfiguration> {
       )
     );
 
-    environment.jersey().register(
-      new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class)
+    // annotations
+    environment.jersey().getResourceConfig().register(
+      new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class), 21
     );
     environment.jersey().register(RolesAllowedDynamicFeature.class);
+    environment.jersey().register(ThingOwnedByTheUserFilter.class);
 
+    // resources
     environment.jersey().register(AccountResource.class);
     environment.jersey().register(SessionResource.class);
     environment.jersey().register(StatisticsResource.class);

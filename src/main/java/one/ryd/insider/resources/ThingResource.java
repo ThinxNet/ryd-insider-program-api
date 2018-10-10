@@ -18,10 +18,8 @@ package one.ryd.insider.resources;
 
 import com.mongodb.BasicDBList;
 import io.dropwizard.auth.Auth;
-import io.dropwizard.jersey.caching.CacheControl;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,6 +30,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import one.ryd.insider.resources.annotation.ThingOwnedByTheUser;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.core.response.InsiderEnvelop;
 import one.ryd.insider.models.CustomEntityRelation;
@@ -74,32 +73,24 @@ public final class ThingResource {
   }
 
   @GET
-  @Path("/{id}")
+  @Path("/{thingId}")
+  @ThingOwnedByTheUser
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("thingId") final ObjectId id
   ) {
-    final List<ObjectId> thingIds = this.thingIds(user);
-    if (!thingIds.contains(id)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
-    }
-
-    final Thing thing = this.dsInsider.get(Thing.class, id);
-
-    return Response.ok(new InsiderEnvelop(this.morphia.toDBObject(thing))).build();
+    return Response
+      .ok(new InsiderEnvelop(this.morphia.toDBObject(this.dsInsider.get(Thing.class, id))))
+      .build();
   }
 
   @GET
-  @Path("/{id}/device")
+  @Path("/{thingId}/device")
+  @ThingOwnedByTheUser
   public Response device(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("thingId") final ObjectId id
   ) {
-    final List<ObjectId> thingIds = this.thingIds(user);
-    if (!thingIds.contains(id)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
-    }
-
     final Device device = this.dsInsider
       .get(Device.class, this.dsInsider.get(Thing.class, id).getDevice());
     if (Objects.isNull(device)) {
@@ -110,17 +101,13 @@ public final class ThingResource {
   }
 
   @GET
-  @Path("{id}/device/confidence")
-  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+  @Path("{thingId}/device/confidence")
+  //@CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+  @ThingOwnedByTheUser
   public Response deviceConfidence(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("thingId") final ObjectId id
   ) {
-    final List<ObjectId> thingIds = this.thingIds(user);
-    if (!thingIds.contains(id)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
-    }
-
     final BasicDBList result = new BasicDBList();
 
     this.dsSession.createAggregation(SessionConfidence.class)
