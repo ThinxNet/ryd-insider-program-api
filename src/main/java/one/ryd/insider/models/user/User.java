@@ -18,7 +18,7 @@ package one.ryd.insider.models.user;
 
 import java.util.List;
 import one.ryd.insider.models.CustomEntityRelation;
-import one.ryd.insider.models.Model;
+import one.ryd.insider.models.DatabaseModel;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
@@ -26,7 +26,7 @@ import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Property;
 
 @Entity(value = "users", noClassnameStored = true)
-public class User implements Model {
+public class User implements DatabaseModel {
   @Id
   private ObjectId id;
 

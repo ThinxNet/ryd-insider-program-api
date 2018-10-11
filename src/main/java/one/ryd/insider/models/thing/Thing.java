@@ -18,14 +18,14 @@ package one.ryd.insider.models.thing;
 
 import java.util.List;
 import one.ryd.insider.models.CustomEntityRelation;
-import one.ryd.insider.models.Model;
+import one.ryd.insider.models.DatabaseModel;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 
 @Entity(value = "things", noClassnameStored = true)
-public class Thing implements Model {
+public class Thing implements DatabaseModel {
   @Id
   private ObjectId id;
 

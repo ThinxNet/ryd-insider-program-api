@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -71,7 +70,6 @@ import org.mongodb.morphia.query.Sort;
 // @todo #7:1h separate methods by domain
 
 @Path("/sessions")
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class SessionResource {
   @Inject

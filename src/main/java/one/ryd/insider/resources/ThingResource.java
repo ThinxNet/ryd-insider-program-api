@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -45,7 +44,6 @@ import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.aggregation.Group;
 
 @Path("/things")
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class ThingResource {
   @Inject

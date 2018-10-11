@@ -45,7 +45,6 @@ import org.mongodb.morphia.aggregation.Group;
 import org.mongodb.morphia.query.Sort;
 
 @Path("/statistics")
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class StatisticsResource {
   @Inject

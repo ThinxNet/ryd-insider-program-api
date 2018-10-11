@@ -16,5 +16,5 @@
 
 package one.ryd.insider.models;
 
-public interface Model {
+public interface DatabaseModel {
 }
