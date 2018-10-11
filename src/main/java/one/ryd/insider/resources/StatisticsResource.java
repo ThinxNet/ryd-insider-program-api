@@ -36,7 +36,7 @@ import one.ryd.insider.core.response.InsiderEnvelop;
 import one.ryd.insider.models.session.SessionSummary;
 import one.ryd.insider.models.session.aggregation.ActivityDto;
 import one.ryd.insider.models.thing.Thing;
-import one.ryd.insider.resources.annotation.ThingOwnedByTheUser;
+import one.ryd.insider.resources.annotation.ThingBelongsToTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
@@ -61,7 +61,7 @@ public final class StatisticsResource {
 
   @GET
   @Path("/{thingId}/activity")
-  @ThingOwnedByTheUser
+  @ThingBelongsToTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,

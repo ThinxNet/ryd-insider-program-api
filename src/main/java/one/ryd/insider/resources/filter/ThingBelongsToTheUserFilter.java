@@ -30,13 +30,13 @@ import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.models.CustomEntityRelation;
 import one.ryd.insider.models.thing.ThingRole;
 import one.ryd.insider.models.thing.ThingType;
-import one.ryd.insider.resources.annotation.ThingOwnedByTheUser;
+import one.ryd.insider.resources.annotation.ThingBelongsToTheUser;
 import org.bson.types.ObjectId;
 
 @Provider
-@ThingOwnedByTheUser
+@ThingBelongsToTheUser
 @Priority(Priorities.AUTHORIZATION)
-public class ThingOwnedByTheUserFilter implements ContainerRequestFilter {
+public class ThingBelongsToTheUserFilter implements ContainerRequestFilter {
   @Override
   public void filter(final ContainerRequestContext ctx) throws IOException {
     final InsiderAuthPrincipal entity = (InsiderAuthPrincipal) ctx.getSecurityContext()
@@ -55,7 +55,7 @@ public class ThingOwnedByTheUserFilter implements ContainerRequestFilter {
       return;
     }
 
-    final List<ObjectId> thingIds = this.thingIds(entity);
+    final List<ObjectId> thingIds = this.thingIds(entity, ThingRole.THING_OWNER, ThingType.CAR);
     if (!thingIds.contains(new ObjectId(thingIdStr))) {
       ctx.abortWith(Response.status(Response.Status.NOT_FOUND).build());
       return;
@@ -63,12 +63,11 @@ public class ThingOwnedByTheUserFilter implements ContainerRequestFilter {
   }
 
   // @todo #7 make role and type configurable via the annotation
-  private List<ObjectId> thingIds(final InsiderAuthPrincipal user) {
+  private List<ObjectId> thingIds(
+    final InsiderAuthPrincipal user, final ThingRole role, final ThingType type
+  ) {
     return user.entity().getThings().stream()
-      .filter(entry ->
-        entry.getRole().equals(ThingRole.THING_OWNER.toString())
-        && entry.getType().equals(ThingType.CAR.toString())
-      )
+      .filter(thg -> thg.getRole().equals(role.toString()) && thg.getType().equals(type.toString()))
       .map(CustomEntityRelation::getId)
       .collect(Collectors.toList());
   }

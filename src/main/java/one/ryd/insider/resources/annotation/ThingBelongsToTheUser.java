@@ -22,5 +22,5 @@ import javax.ws.rs.NameBinding;
 
 @NameBinding
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ThingOwnedByTheUser {
+public @interface ThingBelongsToTheUser {
 }

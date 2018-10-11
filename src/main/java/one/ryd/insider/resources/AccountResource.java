@@ -17,7 +17,6 @@
 package one.ryd.insider.resources;
 
 import io.dropwizard.auth.Auth;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -36,6 +35,7 @@ import one.ryd.insider.models.CustomEntityRelation;
 import one.ryd.insider.models.account.Account;
 import one.ryd.insider.models.account.AccountRole;
 import one.ryd.insider.models.user.User;
+import one.ryd.insider.resources.annotation.AccountBelongsToTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 
@@ -48,67 +48,63 @@ public final class AccountResource {
   private Datastore dsInsider;
 
   @GET
-  @Path("/{id}")
+  @AccountBelongsToTheUser
+  @Path("/{accountId}")
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("accountId") final ObjectId id
   ) {
-    final List<ObjectId> list = this.accountIds(user);
-    if (!list.contains(id)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
-    }
-
     final Account account = this.dsInsider.get(Account.class, id);
-    if (Objects.isNull(account)) {
-      return Response.status(Response.Status.NOT_FOUND).build();
-    }
-
     return Response.ok(new InsiderEnvelop(account)).build();
   }
 
   @GET
-  @Path("/{id}/users")
+  @Path("/{accountId}/users")
+  @AccountBelongsToTheUser
   public Response fetchUsersAll(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("accountId") final ObjectId id
   ) {
-    final List<ObjectId> list = this.accountIds(user);
-    if (!list.contains(id)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
-    }
-
     final Account account = this.dsInsider.get(Account.class, id);
-    if (Objects.isNull(account)) {
-      return Response.status(Response.Status.NOT_FOUND).build();
-    }
-
     final List<User> users = this.dsInsider
       .get(
         User.class,
-        account.getUsers().stream()
-          .map(CustomEntityRelation::getId).collect(Collectors.toList())
+        account.getUsers().stream().map(CustomEntityRelation::getId).collect(Collectors.toList())
       )
       .asList();
-
     return Response.ok(new InsiderEnvelop(users)).build();
   }
 
   @GET
-  public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
-    final List<Account> accounts = this.dsInsider
-      .get(Account.class, this.accountIds(user))
-      .asList();
-    return Response.ok(new InsiderEnvelop(accounts)).build();
+  @Path("/{accountId}/users/{userId}")
+  @AccountBelongsToTheUser
+  public Response fetchUsersAll(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("accountId") final ObjectId accountId,
+    @PathParam("userId") final ObjectId userId
+  ) {
+    final User entity = this.dsInsider.createQuery(User.class)
+      .field("_id").equal(userId)
+      .field("accounts").elemMatch(
+        this.dsInsider.createQuery(CustomEntityRelation.class)
+          .field("id").equal(accountId)
+          .field("role").equal(AccountRole.ACCOUNT_OWNER.toString())
+      )
+      .get();
+    return Objects.isNull(entity)
+      ? Response.status(Response.Status.NOT_FOUND).build()
+      : Response.ok(new InsiderEnvelop(entity)).build();
   }
 
-  private List<ObjectId> accountIds(final InsiderAuthPrincipal user) {
-    return user.entity().getAccounts().stream()
-      .filter(entry ->
-        Arrays
-          .asList(AccountRole.ACCOUNT_OWNER.toString(), AccountRole.ACCOUNT_VIEWER.toString())
-          .contains(entry.getRole())
+  @GET
+  public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
+    final List<Account> accounts = this.dsInsider.createQuery(Account.class)
+      .field("users").elemMatch(
+        this.dsInsider.createQuery(CustomEntityRelation.class)
+          .field("id").equal(user.entity().getId())
+          .field("role").equal(AccountRole.ACCOUNT_OWNER.toString())
       )
-      .map(CustomEntityRelation::getId)
-      .collect(Collectors.toList());
+      .asList();
+    return Response.ok(new InsiderEnvelop(accounts)).build();
   }
 }

@@ -38,7 +38,7 @@ import one.ryd.insider.models.session.SessionConfidence;
 import one.ryd.insider.models.session.aggregation.DeviceConfidenceDto;
 import one.ryd.insider.models.thing.Thing;
 import one.ryd.insider.models.thing.ThingRole;
-import one.ryd.insider.resources.annotation.ThingOwnedByTheUser;
+import one.ryd.insider.resources.annotation.ThingBelongsToTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
@@ -77,7 +77,7 @@ public final class ThingResource {
 
   @GET
   @Path("/{thingId}")
-  @ThingOwnedByTheUser
+  @ThingBelongsToTheUser
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("thingId") final ObjectId id
@@ -89,7 +89,7 @@ public final class ThingResource {
 
   @GET
   @Path("/{thingId}/device")
-  @ThingOwnedByTheUser
+  @ThingBelongsToTheUser
   public Response device(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("thingId") final ObjectId id
@@ -105,7 +105,7 @@ public final class ThingResource {
   @GET
   @Path("{thingId}/device/confidence")
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
-  @ThingOwnedByTheUser
+  @ThingBelongsToTheUser
   public Response deviceConfidence(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("thingId") final ObjectId id

@@ -31,10 +31,12 @@ import one.ryd.insider.core.auth.InsiderTokenAuthFilter;
 import one.ryd.insider.core.auth.InsiderTokenAuthenticator;
 import one.ryd.insider.core.module.InsiderModule;
 import one.ryd.insider.resources.AccountResource;
+import one.ryd.insider.resources.DeleteMeResource;
 import one.ryd.insider.resources.SessionResource;
 import one.ryd.insider.resources.StatisticsResource;
 import one.ryd.insider.resources.ThingResource;
-import one.ryd.insider.resources.filter.ThingOwnedByTheUserFilter;
+import one.ryd.insider.resources.filter.AccountBelongsToTheUserFilter;
+import one.ryd.insider.resources.filter.ThingBelongsToTheUserFilter;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.mongodb.morphia.Datastore;
@@ -97,11 +99,13 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.jersey().getResourceConfig().register(
       new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class), 21
     );
+    environment.jersey().register(AccountBelongsToTheUserFilter.class);
     environment.jersey().register(RolesAllowedDynamicFeature.class);
-    environment.jersey().register(ThingOwnedByTheUserFilter.class);
+    environment.jersey().register(ThingBelongsToTheUserFilter.class);
 
     // resources
     environment.jersey().register(AccountResource.class);
+    environment.jersey().register(DeleteMeResource.class); // @todo #7 remove the delete_me endpoint
     environment.jersey().register(SessionResource.class);
     environment.jersey().register(StatisticsResource.class);
     environment.jersey().register(ThingResource.class);
