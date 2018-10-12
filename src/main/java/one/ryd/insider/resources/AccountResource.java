@@ -83,11 +83,7 @@ public final class AccountResource {
   ) {
     final User entity = this.dsInsider.createQuery(User.class)
       .field("_id").equal(userId)
-      .field("accounts").elemMatch(
-        this.dsInsider.createQuery(CustomEntityRelation.class)
-          .field("id").equal(accountId)
-          .field("role").equal(AccountRole.ACCOUNT_OWNER.toString())
-      )
+      .field("account").equal(accountId)
       .get();
     return Objects.isNull(entity)
       ? Response.status(Response.Status.NOT_FOUND).build()

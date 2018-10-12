@@ -21,12 +21,18 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path("/delete_me")
+@Path("")
 @Produces(MediaType.APPLICATION_JSON)
 public final class DeleteMeResource {
   @GET
-  @Path("/status")
-  public Integer status() {
+  @Path("/delete_me/status")
+  public Integer status1() {
+    return 1;
+  }
+
+  @GET
+  @Path("/users/delete_me")
+  public Integer status2() {
     return 1;
   }
 }
