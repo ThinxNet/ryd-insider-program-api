@@ -21,23 +21,42 @@ import org.mongodb.morphia.annotations.Property;
 
 @Embedded
 public final class ThingYmme {
+  private Boolean needsReview;
+  private Integer year;
+  private String cableStatus;
   private String color;
-  private String fuelType;
+  private String hsn;
+  private String licensePlate;
   private String make;
   private String model;
-  private String modelType;
-  private String vehicleId;
-  private String year;
+  private String tsn;
+  private YmmeFuelType fuelType;
 
   @Property("VIN")
   private String vin;
+
+  public Boolean getNeedsReview() {
+    return this.needsReview;
+  }
+
+  public Integer getYear() {
+    return this.year;
+  }
+
+  public String getCableStatus() {
+    return this.cableStatus;
+  }
 
   public String getColor() {
     return this.color;
   }
 
-  public String getFuelType() {
-    return this.fuelType;
+  public String getHsn() {
+    return this.hsn;
+  }
+
+  public String getLicensePlate() {
+    return this.licensePlate;
   }
 
   public String getMake() {
@@ -48,16 +67,12 @@ public final class ThingYmme {
     return this.model;
   }
 
-  public String getModelType() {
-    return this.modelType;
+  public String getTsn() {
+    return this.tsn;
   }
 
-  public String getVehicleId() {
-    return this.vehicleId;
-  }
-
-  public String getYear() {
-    return this.year;
+  public YmmeFuelType getFuelType() {
+    return this.fuelType;
   }
 
   public String getVin() {
