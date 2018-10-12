@@ -32,8 +32,8 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -54,6 +54,7 @@ import one.ryd.insider.models.session.embedded.envelope.EnvelopeDeviceEvent;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeMapMatch;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeWeather;
+import one.ryd.insider.resources.annotation.SessionBelongsToTheUser;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
@@ -70,31 +71,28 @@ import org.mongodb.morphia.query.Sort;
 // @todo #7:1h separate methods by domain
 
 @Path("/sessions")
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class SessionResource {
-  private final Datastore dsInsider;
-  private final Datastore dsSession;
+  @Inject
+  @Named("datastoreInsider")
+  private Datastore dsInsider;
+
+  @Inject
+  @Named("datastoreSession")
+  private Datastore dsSession;
 
   @Inject
   private Morphia morphia;
 
-  public SessionResource(final Datastore dsInsider, final Datastore dsSession) {
-    this.dsInsider = dsInsider;
-    this.dsSession = dsSession;
-  }
-
   @GET
-  @Path("/{id}")
+  @Path("/{sessionId}")
+  @SessionBelongsToTheUser
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id,
+    @PathParam("sessionId") final ObjectId id,
     @Context final HttpServletRequest httpRequest
   ) {
     final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
-    if (Objects.isNull(session)) {
-      return Response.status(Response.Status.NOT_FOUND).build();
-    }
 
     final DBObject result = this.morphia.toDBObject(session);
     final List<ObjectId> segments = (List<ObjectId>) result.get("segments");
@@ -118,18 +116,14 @@ public final class SessionResource {
   }
 
   @GET
-  @Path("/{id}/environment")
+  @Path("/{sessionId}/environment")
+  @SessionBelongsToTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   public Response segments(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id,
+    @PathParam("sessionId") final ObjectId id,
     @Context final HttpServletRequest httpRequest
   ) {
-    final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
-    if (Objects.isNull(session)) {
-      return Response.status(Response.Status.NOT_FOUND).build();
-    }
-
     final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
       .field("session").equal(id)
       .field("enhancements.type").equal("MAP_WAY")
@@ -174,18 +168,14 @@ public final class SessionResource {
   }
 
   @GET
-  @Path("/{id}/environment/overspeed")
+  @Path("/{sessionId}/environment/overspeed")
+  @SessionBelongsToTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response segments(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id,
+    @PathParam("sessionId") final ObjectId id,
     @DefaultValue("geo") @QueryParam("source") final String source
   ) {
-    final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
-    if (Objects.isNull(session)) {
-      return Response.status(Response.Status.NOT_FOUND).build();
-    }
-
     final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
       .field("session").equal(id)
       .field("enhancements.type").equal("MAP_WAY")
@@ -257,11 +247,12 @@ public final class SessionResource {
   }
 
   @GET
-  @Path("/{id}/events")
+  @Path("/{sessionId}/events")
+  @SessionBelongsToTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response fetchAllEvents(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("sessionId") final ObjectId id
   ) {
     final JsonNodeFactory json = JsonNodeFactory.instance;
     final ArrayNode events = json.arrayNode();
@@ -285,11 +276,12 @@ public final class SessionResource {
   }
 
   @GET
-  @Path("/{id}/locations")
+  @Path("/{sessionId}/locations")
+  @SessionBelongsToTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response fetchAllLocations(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id,
+    @PathParam("sessionId") final ObjectId id,
     @DefaultValue("gps") @QueryParam("source") final String source
   ) {
     final JsonNodeFactory json = JsonNodeFactory.instance;
@@ -452,17 +444,15 @@ public final class SessionResource {
   }
 
   @GET
-  @Path("/{id}/alike")
+  @Path("/{sessionId}/alike")
+  @SessionBelongsToTheUser
   @CacheControl(maxAge = 15, maxAgeUnit = TimeUnit.MINUTES)
   public Response alike(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id,
+    @PathParam("sessionId") final ObjectId id,
     @DefaultValue("90") @QueryParam("confidence") final Integer confidence
   ) {
     final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
-    if (Objects.isNull(session)) {
-      return Response.status(Response.Status.NOT_FOUND).build();
-    }
 
     final List<SessionSegment> segments = this.dsSession
       .get(SessionSegment.class, session.getSegments())
@@ -540,10 +530,11 @@ public final class SessionResource {
   }
 
   @GET
-  @Path("/{id}/weather")
+  @Path("/{sessionId}/weather")
+  @SessionBelongsToTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response weather(
-    @Auth final InsiderAuthPrincipal user, @PathParam("id") final ObjectId id
+    @Auth final InsiderAuthPrincipal user, @PathParam("sessionId") final ObjectId id
   ) {
     final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
       .field("session").equal(id)

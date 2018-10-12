@@ -14,10 +14,25 @@
  * limitations under the License.
  */
 
-package one.ryd.insider.models.account;
+package one.ryd.insider.resources;
 
-public enum AccountRole {
-  ACCOUNT_OWNER,
-  ACCOUNT_USER,
-  ACCOUNT_VIEWER
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+@Path("")
+@Produces(MediaType.APPLICATION_JSON)
+public final class DeleteMeResource {
+  @GET
+  @Path("/delete_me/status")
+  public Integer status1() {
+    return 1;
+  }
+
+  @GET
+  @Path("/users/delete_me")
+  public Integer status2() {
+    return 1;
+  }
 }

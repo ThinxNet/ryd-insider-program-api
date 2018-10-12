@@ -18,7 +18,7 @@ package one.ryd.insider.models.session;
 
 import java.time.Instant;
 import java.util.List;
-import one.ryd.insider.models.Model;
+import one.ryd.insider.models.DatabaseModel;
 import one.ryd.insider.models.session.embedded.SegmentTypedEnvelope;
 import one.ryd.insider.models.session.embedded.SessionSegmentAttributes;
 import org.bson.types.ObjectId;
@@ -28,7 +28,7 @@ import org.mongodb.morphia.annotations.Id;
 
 // do not specify indexes here
 @Entity(value = "ip_session_segment", noClassnameStored = true)
-public class SessionSegment implements Model {
+public class SessionSegment implements DatabaseModel {
   @Id
   private ObjectId id;
 

@@ -16,14 +16,14 @@
 
 package one.ryd.insider.models.device;
 
-import one.ryd.insider.models.Model;
+import one.ryd.insider.models.DatabaseModel;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Property;
 
 @Entity(value = "devices", noClassnameStored = true)
-public class Device implements Model {
+public class Device implements DatabaseModel {
   @Id
   private ObjectId id;
 

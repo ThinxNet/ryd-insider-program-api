@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -35,6 +36,7 @@ import one.ryd.insider.core.response.InsiderEnvelop;
 import one.ryd.insider.models.session.SessionSummary;
 import one.ryd.insider.models.session.aggregation.ActivityDto;
 import one.ryd.insider.models.thing.Thing;
+import one.ryd.insider.resources.annotation.ThingBelongsToTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
@@ -43,26 +45,26 @@ import org.mongodb.morphia.aggregation.Group;
 import org.mongodb.morphia.query.Sort;
 
 @Path("/statistics")
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class StatisticsResource {
-  private final Datastore dsInsider;
-  private final Datastore dsSession;
+  @Inject
+  @Named("datastoreInsider")
+  private Datastore dsInsider;
+
+  @Inject
+  @Named("datastoreSession")
+  private Datastore dsSession;
 
   @Inject
   private Morphia morphia;
 
-  public StatisticsResource(final Datastore dsInsider, final Datastore dsSession) {
-    this.dsInsider = dsInsider;
-    this.dsSession = dsSession;
-  }
-
   @GET
-  @Path("/{id}/activity")
+  @Path("/{thingId}/activity")
+  @ThingBelongsToTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("thingId") final ObjectId id
   ) {
     final Thing thing = this.dsInsider.get(Thing.class, id);
     if (Objects.isNull(thing)) {
@@ -74,7 +76,7 @@ public final class StatisticsResource {
 
     this.dsSession.createAggregation(SessionSummary.class)
       .match(
-        this.dsInsider.createQuery(SessionSummary.class)
+        this.dsSession.createQuery(SessionSummary.class)
           .field("device").equal(thing.getDevice())
           //.field("incomplete").equal(false)
           .field("timestamp").greaterThanOrEq(timestamp)

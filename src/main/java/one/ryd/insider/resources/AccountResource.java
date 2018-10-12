@@ -20,7 +20,8 @@ import io.dropwizard.auth.Auth;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import javax.ws.rs.Consumes;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -29,50 +30,75 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.core.response.InsiderEnvelop;
+import one.ryd.insider.models.CustomEntityRelation;
 import one.ryd.insider.models.account.Account;
+import one.ryd.insider.models.account.AccountRole;
+import one.ryd.insider.models.user.User;
+import one.ryd.insider.resources.annotation.AccountBelongsToTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 
 @Path("/accounts")
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class AccountResource {
-  private final Datastore datastore;
-
-  public AccountResource(final Datastore datastore) {
-    this.datastore = datastore;
-  }
+  @Inject
+  @Named("datastoreInsider")
+  private Datastore dsInsider;
 
   @GET
-  @Path("/{id}")
-  @Produces(MediaType.APPLICATION_JSON)
+  @AccountBelongsToTheUser
+  @Path("/{accountId}")
   public Response fetchOne(
     @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
+    @PathParam("accountId") final ObjectId id
   ) {
-    final List<ObjectId> list = this.accountIds(user);
-    if (!list.contains(id)) {
-      return Response.status(Response.Status.FORBIDDEN).build();
-    }
-
-    final Account account = this.datastore.get(Account.class, id);
-    if (Objects.isNull(account)) {
-      return Response.status(Response.Status.NOT_FOUND).build();
-    }
-
+    final Account account = this.dsInsider.get(Account.class, id);
     return Response.ok(new InsiderEnvelop(account)).build();
   }
 
   @GET
-  public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
-    final List<Account> accounts = this.datastore.createQuery(Account.class)
-      .field("_id").in(this.accountIds(user))
+  @Path("/{accountId}/users")
+  @AccountBelongsToTheUser
+  public Response fetchUsersAll(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("accountId") final ObjectId id
+  ) {
+    final Account account = this.dsInsider.get(Account.class, id);
+    final List<User> users = this.dsInsider
+      .get(
+        User.class,
+        account.getUsers().stream().map(CustomEntityRelation::getId).collect(Collectors.toList())
+      )
       .asList();
-    return Response.ok(new InsiderEnvelop(accounts)).build();
+    return Response.ok(new InsiderEnvelop(users)).build();
   }
 
-  private List<ObjectId> accountIds(final InsiderAuthPrincipal user) {
-    return user.entity().getAccounts().stream()
-      .map(entry -> entry.getId()).collect(Collectors.toList());
+  @GET
+  @Path("/{accountId}/users/{userId}")
+  @AccountBelongsToTheUser
+  public Response fetchUsersAll(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("accountId") final ObjectId accountId,
+    @PathParam("userId") final ObjectId userId
+  ) {
+    final User entity = this.dsInsider.createQuery(User.class)
+      .field("_id").equal(userId)
+      .field("account").equal(accountId)
+      .get();
+    return Objects.isNull(entity)
+      ? Response.status(Response.Status.NOT_FOUND).build()
+      : Response.ok(new InsiderEnvelop(entity)).build();
+  }
+
+  @GET
+  public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
+    final List<Account> accounts = this.dsInsider.createQuery(Account.class)
+      .field("users").elemMatch(
+        this.dsInsider.createQuery(CustomEntityRelation.class)
+          .field("id").equal(user.entity().getId())
+          .field("role").equal(AccountRole.ACCOUNT_OWNER.toString())
+      )
+      .asList();
+    return Response.ok(new InsiderEnvelop(accounts)).build();
   }
 }

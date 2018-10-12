@@ -31,11 +31,13 @@ import one.ryd.insider.core.auth.InsiderTokenAuthFilter;
 import one.ryd.insider.core.auth.InsiderTokenAuthenticator;
 import one.ryd.insider.core.module.InsiderModule;
 import one.ryd.insider.resources.AccountResource;
-import one.ryd.insider.resources.DeviceResource;
+import one.ryd.insider.resources.DeleteMeResource;
 import one.ryd.insider.resources.SessionResource;
 import one.ryd.insider.resources.StatisticsResource;
 import one.ryd.insider.resources.ThingResource;
-import one.ryd.insider.resources.UserResource;
+import one.ryd.insider.resources.filter.AccountBelongsToTheUserFilter;
+import one.ryd.insider.resources.filter.SessionBelongsToTheUserFilter;
+import one.ryd.insider.resources.filter.ThingBelongsToTheUserFilter;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.mongodb.morphia.Datastore;
@@ -60,13 +62,6 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     morphia.getMapper().getOptions().setStoreNulls(true);
     morphia.mapPackage("one.ryd.insider.models");
 
-    environment.jersey().register(new AbstractBinder() {
-      @Override
-      protected void configure() {
-        bind(morphia).to(Morphia.class);
-      }
-    });
-
     final MongoClientURI dsInsiderUri = configuration.getDbInsider().getUri();
     final MongoClientURI dsSessionUri = configuration.getDbSession().getUri();
 
@@ -75,6 +70,17 @@ public final class ApiApplication extends Application<ApiConfiguration> {
 
     final Datastore dsInsider = morphia.createDatastore(mongoInsider, dsInsiderUri.getDatabase());
     final Datastore dsSession = morphia.createDatastore(mongoSession, dsSessionUri.getDatabase());
+
+    environment.jersey().register(new AbstractBinder() {
+      @Override
+      protected void configure() {
+        bind(dsInsider).to(Datastore.class).proxy(true).proxyForSameScope(false)
+          .named("datastoreInsider");
+        bind(dsSession).to(Datastore.class).proxy(true).proxyForSameScope(false)
+          .named("datastoreSession");
+        bind(morphia).to(Morphia.class);
+      }
+    });
 
     environment.lifecycle().manage(new MongoManaged(mongoInsider, dsInsider));
     environment.lifecycle().manage(new MongoManaged(mongoSession, dsSession));
@@ -90,16 +96,21 @@ public final class ApiApplication extends Application<ApiConfiguration> {
       )
     );
 
-    environment.jersey().register(RolesAllowedDynamicFeature.class);
-    environment.jersey().register(
-      new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class)
+    // annotations
+    environment.jersey().getResourceConfig().register(
+      new AuthValueFactoryProvider.Binder<>(InsiderAuthPrincipal.class), 21
     );
-    environment.jersey().register(new AccountResource(dsInsider));
-    environment.jersey().register(new DeviceResource(dsInsider, dsSession));
-    environment.jersey().register(new SessionResource(dsInsider, dsSession));
-    environment.jersey().register(new StatisticsResource(dsInsider, dsSession));
-    environment.jersey().register(new ThingResource(dsInsider));
-    environment.jersey().register(new UserResource(dsInsider));
+    environment.jersey().register(AccountBelongsToTheUserFilter.class);
+    environment.jersey().register(RolesAllowedDynamicFeature.class);
+    environment.jersey().register(SessionBelongsToTheUserFilter.class);
+    environment.jersey().register(ThingBelongsToTheUserFilter.class);
+
+    // resources
+    environment.jersey().register(AccountResource.class);
+    environment.jersey().register(DeleteMeResource.class); // @todo #7 remove the delete_me endpoint
+    environment.jersey().register(SessionResource.class);
+    environment.jersey().register(StatisticsResource.class);
+    environment.jersey().register(ThingResource.class);
   }
 
   @Override

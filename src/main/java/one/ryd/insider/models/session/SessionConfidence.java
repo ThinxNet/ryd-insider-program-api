@@ -17,13 +17,14 @@
 package one.ryd.insider.models.session;
 
 import java.time.Instant;
+import one.ryd.insider.models.DatabaseModel;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 
 // do not specify indexes here
 @Entity(value = "ip_session_confidence", noClassnameStored = true)
-public final class SessionConfidence {
+public final class SessionConfidence implements DatabaseModel {
   @Id
   private ObjectId id;
 

@@ -4,10 +4,10 @@ server:
       port: 8090
 
 dbInsider:
-  uri: "mongodb://localhost:27017/insider_program"
+  uri: "mongodb://localhost:27017/insider_program?readPreference=secondaryPreferred"
 
 dbSession:
-  uri: "mongodb://localhost:27017/insider_program"
+  uri: "mongodb://localhost:27017/insider_sessions?readPreference=secondaryPreferred"
 
 api:
   cors:

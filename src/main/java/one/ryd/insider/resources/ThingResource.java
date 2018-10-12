@@ -16,9 +16,13 @@
 
 package one.ryd.insider.resources;
 
+import com.mongodb.BasicDBList;
 import io.dropwizard.auth.Auth;
+import io.dropwizard.jersey.caching.CacheControl;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
+import javax.inject.Named;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -27,44 +31,99 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.core.response.InsiderEnvelop;
+import one.ryd.insider.models.CustomEntityRelation;
+import one.ryd.insider.models.device.Device;
+import one.ryd.insider.models.session.SessionConfidence;
+import one.ryd.insider.models.session.aggregation.DeviceConfidenceDto;
 import one.ryd.insider.models.thing.Thing;
+import one.ryd.insider.models.thing.ThingRole;
+import one.ryd.insider.resources.annotation.ThingBelongsToTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
+import org.mongodb.morphia.aggregation.Group;
 
 @Path("/things")
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public final class ThingResource {
-  private final Datastore datastore;
+  @Inject
+  @Named("datastoreInsider")
+  private Datastore dsInsider;
+
+  @Inject
+  @Named("datastoreSession")
+  private Datastore dsSession;
 
   @Inject
   private Morphia morphia;
-
-  public ThingResource(final Datastore datastore) {
-    this.datastore = datastore;
-  }
-
-  @GET
-  @Path("/{id}")
-  public Thing fetchOne(
-    @Auth final InsiderAuthPrincipal user,
-    @PathParam("id") final ObjectId id
-  ) {
-    return this.datastore.createQuery(Thing.class)
-      .field("users.id").equal(user.entity().getId())
-      .field("_id").equal(id).get();
-  }
 
   @GET
   public Response fetchAll(@Auth final InsiderAuthPrincipal user) {
     return Response
       .ok(new InsiderEnvelop(
-        this.datastore.createQuery(Thing.class)
-          .field("users.id").equal(user.entity().getId())
+        this.dsInsider.createQuery(Thing.class)
+          .field("users").elemMatch(
+            this.dsInsider.createQuery(CustomEntityRelation.class)
+              .field("id").equal(user.entity().getId())
+              .field("role").equal(ThingRole.THING_OWNER.toString())
+          )
           .asList().stream().map(this.morphia::toDBObject).toArray()
         )
       )
       .build();
+  }
+
+  @GET
+  @Path("/{thingId}")
+  @ThingBelongsToTheUser
+  public Response fetchOne(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("thingId") final ObjectId id
+  ) {
+    return Response
+      .ok(new InsiderEnvelop(this.morphia.toDBObject(this.dsInsider.get(Thing.class, id))))
+      .build();
+  }
+
+  @GET
+  @Path("/{thingId}/device")
+  @ThingBelongsToTheUser
+  public Response device(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("thingId") final ObjectId id
+  ) {
+    final Device device = this.dsInsider
+      .get(Device.class, this.dsInsider.get(Thing.class, id).getDevice());
+    if (Objects.isNull(device)) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+    return Response.ok(new InsiderEnvelop(this.morphia.toDBObject(device))).build();
+  }
+
+  @GET
+  @Path("{thingId}/device/confidence")
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.HOURS)
+  @ThingBelongsToTheUser
+  public Response deviceConfidence(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("thingId") final ObjectId id
+  ) {
+    final BasicDBList result = new BasicDBList();
+
+    this.dsSession.createAggregation(SessionConfidence.class)
+      .match(
+        this.dsSession.createQuery(SessionConfidence.class)
+          .field("device").equal(this.dsInsider.get(Thing.class, id).getDevice())
+      )
+      .group(
+        Group.grouping("_id", "target"),
+        Group.grouping("confidence", Group.average("confidence")),
+        Group.grouping("score", Group.average("score")),
+        Group.grouping("sampleSize", Group.max("sampleSize"))
+      )
+      .aggregate(DeviceConfidenceDto.class)
+      .forEachRemaining(result::add);
+
+    return Response.ok(new InsiderEnvelop(result)).build();
   }
 }

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package one.ryd.insider.models.account;
+package one.ryd.insider.models.thing;
 
-public enum AccountRole {
-  ACCOUNT_OWNER,
-  ACCOUNT_USER,
-  ACCOUNT_VIEWER
+public enum ThingType {
+  CAR
 }

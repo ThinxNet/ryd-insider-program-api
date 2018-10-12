@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package one.ryd.insider.models.account;
+package one.ryd.insider.resources.annotation;
 
-public enum AccountRole {
-  ACCOUNT_OWNER,
-  ACCOUNT_USER,
-  ACCOUNT_VIEWER
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import javax.ws.rs.NameBinding;
+
+@NameBinding
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AccountBelongsToTheUser {
+// @todo #7 move these kind of annotations out
 }
