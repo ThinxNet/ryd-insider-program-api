@@ -17,7 +17,6 @@
 package one.ryd.insider.resources.filter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -30,20 +29,23 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
-import one.ryd.insider.models.CustomEntityRelation;
-import one.ryd.insider.models.account.Account;
-import one.ryd.insider.models.account.AccountRole;
-import one.ryd.insider.resources.annotation.AccountBelongsToTheUser;
+import one.ryd.insider.models.device.Device;
+import one.ryd.insider.models.session.SessionSummary;
+import one.ryd.insider.resources.annotation.SessionBelongsToTheUser;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 
 @Provider
-@AccountBelongsToTheUser
+@SessionBelongsToTheUser
 @Priority(Priorities.AUTHORIZATION)
-public class AccountBelongsToTheUserFilter implements ContainerRequestFilter {
+public class SessionBelongsToTheUserFilter implements ContainerRequestFilter {
   @Inject
   @Named("datastoreInsider")
   private Datastore dsInsider;
+
+  @Inject
+  @Named("datastoreSession")
+  private Datastore dsSession;
 
   @Override
   public void filter(final ContainerRequestContext ctx) throws IOException {
@@ -53,36 +55,39 @@ public class AccountBelongsToTheUserFilter implements ContainerRequestFilter {
       throw new IOException("Authenticated entity is not found");
     }
 
-    if (!ctx.getUriInfo().getPathParameters().containsKey("accountId")) {
-      throw new IOException("'accountId' path parameter is not found");
+    if (!ctx.getUriInfo().getPathParameters().containsKey("sessionId")) {
+      throw new IOException("'sessionId' path parameter is not found");
     }
 
-    final String accountIdStr = ctx.getUriInfo().getPathParameters().get("accountId").get(0);
-    if (!ObjectId.isValid(accountIdStr)) {
+    final String sessionIdStr = ctx.getUriInfo().getPathParameters().get("sessionId").get(0);
+    if (!ObjectId.isValid(sessionIdStr)) {
       ctx.abortWith(Response.serverError().status(Response.Status.BAD_REQUEST).build());
       return;
     }
 
-    final List<ObjectId> accountIds = this.accountIds(
-      entity, Arrays.asList(AccountRole.ACCOUNT_OWNER, AccountRole.ACCOUNT_VIEWER)
-    );
-    if (!accountIds.contains(new ObjectId(accountIdStr))) {
+    final SessionSummary session = this.dsSession
+      .createQuery(SessionSummary.class)
+      .project("device", true)
+      .field("_id").equal(new ObjectId(sessionIdStr))
+      .get();
+    if (Objects.isNull(session)) {
+      ctx.abortWith(Response.status(Response.Status.NOT_FOUND).build());
+      return;
+    }
+
+    final List<ObjectId> deviceIds = this.deviceIds(entity);
+    if (!deviceIds.contains(session.getDevice())) {
       ctx.abortWith(Response.status(Response.Status.NOT_FOUND).build());
       return;
     }
   }
 
-  // @todo #7 make roles configurable via the annotation
-  private List<ObjectId> accountIds(final InsiderAuthPrincipal user, final List<AccountRole> roles) {
-    return this.dsInsider.createQuery(Account.class)
+  private List<ObjectId> deviceIds(final InsiderAuthPrincipal user) {
+    return this.dsInsider.createQuery(Device.class)
       .project("_id", true)
-      .field("users").elemMatch(
-        this.dsInsider.createQuery(CustomEntityRelation.class)
-          .field("id").equal(user.entity().getId())
-          .field("role").in(roles.stream().map(Enum::toString).collect(Collectors.toList()))
-      )
+      .field("account").equal(user.entity().getAccount())
       .asList().stream()
-      .map(Account::getId)
+      .map(Device::getId)
       .collect(Collectors.toList());
   }
 }

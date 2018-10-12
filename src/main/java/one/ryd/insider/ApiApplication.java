@@ -36,6 +36,7 @@ import one.ryd.insider.resources.SessionResource;
 import one.ryd.insider.resources.StatisticsResource;
 import one.ryd.insider.resources.ThingResource;
 import one.ryd.insider.resources.filter.AccountBelongsToTheUserFilter;
+import one.ryd.insider.resources.filter.SessionBelongsToTheUserFilter;
 import one.ryd.insider.resources.filter.ThingBelongsToTheUserFilter;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
@@ -101,6 +102,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     );
     environment.jersey().register(AccountBelongsToTheUserFilter.class);
     environment.jersey().register(RolesAllowedDynamicFeature.class);
+    environment.jersey().register(SessionBelongsToTheUserFilter.class);
     environment.jersey().register(ThingBelongsToTheUserFilter.class);
 
     // resources

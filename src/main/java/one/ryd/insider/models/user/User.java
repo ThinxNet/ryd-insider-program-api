@@ -35,9 +35,6 @@ public class User implements DatabaseModel {
   private ObjectId account;
 
   @Embedded
-  private List<CustomEntityRelation> accounts;
-
-  @Embedded
   private List<CustomEntityRelation> things;
 
   @Property("auth_tokens")
@@ -49,10 +46,6 @@ public class User implements DatabaseModel {
 
   public String getEmail() {
     return this.email;
-  }
-
-  public List<CustomEntityRelation> getAccounts() {
-    return this.accounts;
   }
 
   public List<CustomEntityRelation> getThings() {

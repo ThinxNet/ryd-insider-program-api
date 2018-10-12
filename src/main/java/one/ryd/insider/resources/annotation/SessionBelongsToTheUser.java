@@ -22,6 +22,5 @@ import javax.ws.rs.NameBinding;
 
 @NameBinding
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AccountBelongsToTheUser {
-// @todo #7 move these kind of annotations out
+public @interface SessionBelongsToTheUser {
 }
