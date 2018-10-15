@@ -30,6 +30,7 @@ import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.core.auth.InsiderTokenAuthFilter;
 import one.ryd.insider.core.auth.InsiderTokenAuthenticator;
 import one.ryd.insider.core.module.InsiderModule;
+import one.ryd.insider.models.device.converter.StringToDeviceStatusValueConverter;
 import one.ryd.insider.resources.AccountResource;
 import one.ryd.insider.resources.DeleteMeResource;
 import one.ryd.insider.resources.SessionResource;
@@ -61,6 +62,7 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     morphia.getMapper().getOptions().setStoreEmpties(true);
     morphia.getMapper().getOptions().setStoreNulls(true);
     morphia.mapPackage("one.ryd.insider.models");
+    morphia.getMapper().getConverters().addConverter(StringToDeviceStatusValueConverter.class);
 
     final MongoClientURI dsInsiderUri = configuration.getDbInsider().getUri();
     final MongoClientURI dsSessionUri = configuration.getDbSession().getUri();

@@ -41,6 +41,8 @@ public class Thing implements DatabaseModel {
   @Embedded
   private ThingYmme ymme;
 
+  private ThingType type;
+
   public ObjectId getId() {
     return this.id;
   }
@@ -63,5 +65,9 @@ public class Thing implements DatabaseModel {
 
   public ThingYmme getYmme() {
     return this.ymme;
+  }
+
+  public ThingType getType() {
+    return this.type;
   }
 }
