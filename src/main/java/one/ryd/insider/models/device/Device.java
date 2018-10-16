@@ -18,6 +18,7 @@ package one.ryd.insider.models.device;
 
 import one.ryd.insider.models.DatabaseModel;
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Property;
@@ -27,17 +28,47 @@ public class Device implements DatabaseModel {
   @Id
   private ObjectId id;
 
+  @Property("id")
+  private String code;
+
+  private Boolean pluggedIn;
+
   private ObjectId account;
 
   private ObjectId thing;
 
+  private String configVersion;
+
+  private String fwVersion;
+
+  @Property("VBUSFW")
+  private String vBusFw;
+
+  @Property("VBUSDB")
+  private String vBusDb;
+
+  private Integer obdBusConflictCounter;
+
+  private Boolean obdDisabled;
+
+  private DeviceObdFeatures obdFeatures;
+
+  private String scriptVersion;
+
   @Property("sn")
   private String serialNumber;
 
-  private Boolean pluggedIn;
+  private String state;
+
+  @Embedded("dongleStatus")
+  private DeviceStatus status;
 
   public ObjectId getId() {
     return this.id;
+  }
+
+  public String getCode() {
+    return this.code;
   }
 
   public Boolean getPluggedIn() {
@@ -52,7 +83,47 @@ public class Device implements DatabaseModel {
     return this.thing;
   }
 
+  public String getConfigVersion() {
+    return this.configVersion;
+  }
+
+  public String getFwVersion() {
+    return this.fwVersion;
+  }
+
+  public String getVBusFw() {
+    return this.vBusFw;
+  }
+
+  public String getVBusDb() {
+    return this.vBusDb;
+  }
+
+  public Integer obdBusConflictCounter() {
+    return this.obdBusConflictCounter;
+  }
+
+  public Boolean obdDisabled() {
+    return this.obdDisabled;
+  }
+
+  public DeviceObdFeatures getObdFeatures() {
+    return this.obdFeatures;
+  }
+
+  public String getScriptVersion() {
+    return this.scriptVersion;
+  }
+
   public String getSerialNumber() {
     return this.serialNumber;
+  }
+
+  public String getState() {
+    return this.state;
+  }
+
+  public DeviceStatus getStatus() {
+    return this.status;
   }
 }

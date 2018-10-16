@@ -14,18 +14,34 @@
  * limitations under the License.
  */
 
-package one.ryd.insider.core.module;
+package one.ryd.insider.models.device;
 
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import one.ryd.insider.core.serialize.ObjectIdDeserialize;
-import one.ryd.insider.core.serialize.ObjectIdSerialize;
-import org.bson.types.ObjectId;
+import java.util.Map;
+import org.mongodb.morphia.annotations.Embedded;
 
-public final class InsiderModule extends SimpleModule {
-  @Override
-  public void setupModule(final SetupContext context) {
-    this.addDeserializer(ObjectId.class, new ObjectIdDeserialize());
-    this.addSerializer(ObjectId.class, new ObjectIdSerialize());
-    super.setupModule(context);
+@Embedded
+public final class DeviceObdFeatures {
+  private Protocol protocol;
+  private Map<String, Boolean> params;
+
+  public Protocol getProtocol() {
+    return this.protocol;
+  }
+
+  public Map<String, Boolean> getParams() {
+    return this.params;
+  }
+
+  private final static class Protocol {
+    private Integer code;
+    private String description;
+
+    public Integer getCode() {
+      return this.code;
+    }
+
+    public String getDescription() {
+      return this.description;
+    }
   }
 }

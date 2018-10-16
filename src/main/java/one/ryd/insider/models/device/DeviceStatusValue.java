@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-package one.ryd.insider.core.module;
+package one.ryd.insider.models.device;
 
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import one.ryd.insider.core.serialize.ObjectIdDeserialize;
-import one.ryd.insider.core.serialize.ObjectIdSerialize;
-import org.bson.types.ObjectId;
-
-public final class InsiderModule extends SimpleModule {
-  @Override
-  public void setupModule(final SetupContext context) {
-    this.addDeserializer(ObjectId.class, new ObjectIdDeserialize());
-    this.addSerializer(ObjectId.class, new ObjectIdSerialize());
-    super.setupModule(context);
-  }
+public enum DeviceStatusValue {
+  ERROR,
+  OK,
+  UNKNOWN
 }
