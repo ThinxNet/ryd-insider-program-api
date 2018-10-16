@@ -41,6 +41,18 @@ public class Device implements DatabaseModel {
 
   private String fwVersion;
 
+  @Property("VBUSFW")
+  private String vBusFw;
+
+  @Property("VBUSDB")
+  private String vBusDb;
+
+  private Integer obdBusConflictCounter;
+
+  private Boolean obdDisabled;
+
+  private DeviceObdFeatures obdFeatures;
+
   private String scriptVersion;
 
   @Property("sn")
@@ -77,6 +89,26 @@ public class Device implements DatabaseModel {
 
   public String getFwVersion() {
     return this.fwVersion;
+  }
+
+  public String getVBusFw() {
+    return this.vBusFw;
+  }
+
+  public String getVBusDb() {
+    return this.vBusDb;
+  }
+
+  public Integer obdBusConflictCounter() {
+    return this.obdBusConflictCounter;
+  }
+
+  public Boolean obdDisabled() {
+    return this.obdDisabled;
+  }
+
+  public DeviceObdFeatures getObdFeatures() {
+    return this.obdFeatures;
   }
 
   public String getScriptVersion() {
