@@ -87,6 +87,7 @@ public final class ThingResource {
 
   @GET
   @Path("/{thingId}/device")
+  @CacheControl(maxAge = 30, maxAgeUnit = TimeUnit.MINUTES)
   @ThingBelongsToTheUser
   public Response device(
     @Auth final InsiderAuthPrincipal user,
