@@ -29,7 +29,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
 import one.ryd.insider.models.feedback.WidgetFeedback;
+import one.ryd.insider.resources.request.FeedbackWidgetParam;
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.Morphia;
 
 @Path("/feedback")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,13 +40,30 @@ public final class FeedbackResource {
   @Named("datastoreInsider")
   private Datastore dsInsider;
 
+  @Inject
+  private Morphia morphia;
+
   @POST
   @Path("/widget/{id}")
   public Response widgetNewEntry(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("id") final String reference,
-    @Valid @NotNull final WidgetFeedback entry
+    @Valid @NotNull final FeedbackWidgetParam param
   ) {
+    try {
+      this.dsInsider.save(
+        new WidgetFeedback(
+          user.entity().getId(),
+          user.entity().getAccount(),
+          reference,
+          param.getMessage(),
+          param.getPayload(),
+          param.getCategory()
+        )
+      );
+    } catch (final Exception exception) {
+      return Response.serverError().status(422).build();
+    }
     return Response.status(Response.Status.NO_CONTENT).build();
   }
 }

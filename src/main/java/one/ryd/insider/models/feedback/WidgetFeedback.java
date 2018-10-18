@@ -17,7 +17,6 @@
 package one.ryd.insider.models.feedback;
 
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import one.ryd.insider.models.DatabaseModel;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
@@ -32,17 +31,33 @@ public class WidgetFeedback implements DatabaseModel {
   private ObjectId user;
 
   @NotNull
-  @Size(min = 1)
+  private ObjectId account;
+
+  @NotNull
   private String reference;
 
   @NotNull
-  @Size(min = 1)
   private String message;
 
   @NotNull
-  @Size(min = 1)
   private String payload;
 
   @NotNull
   private WidgetFeedbackCategory category;
+
+  public WidgetFeedback(
+    final ObjectId user,
+    final ObjectId account,
+    final String reference,
+    final String message,
+    final String payload,
+    final WidgetFeedbackCategory category
+  ) {
+    this.user = user;
+    this.account = account;
+    this.reference = reference;
+    this.message = message;
+    this.payload = payload;
+    this.category = category;
+  }
 }
