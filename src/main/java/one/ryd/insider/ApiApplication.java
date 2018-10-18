@@ -23,6 +23,7 @@ import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import java.util.Arrays;
 import one.ryd.insider.bundles.cors.CorsBundle;
 import one.ryd.insider.core.MongoHealthCheck;
 import one.ryd.insider.core.MongoManaged;
@@ -33,6 +34,7 @@ import one.ryd.insider.core.module.InsiderModule;
 import one.ryd.insider.models.device.converter.StringToDeviceStatusValueConverter;
 import one.ryd.insider.resources.AccountResource;
 import one.ryd.insider.resources.DeleteMeResource;
+import one.ryd.insider.resources.FeedbackResource;
 import one.ryd.insider.resources.SessionResource;
 import one.ryd.insider.resources.StatisticsResource;
 import one.ryd.insider.resources.ThingResource;
@@ -108,11 +110,13 @@ public final class ApiApplication extends Application<ApiConfiguration> {
     environment.jersey().register(ThingBelongsToTheUserFilter.class);
 
     // resources
-    environment.jersey().register(AccountResource.class);
-    environment.jersey().register(DeleteMeResource.class); // @todo #7 remove the delete_me endpoint
-    environment.jersey().register(SessionResource.class);
-    environment.jersey().register(StatisticsResource.class);
-    environment.jersey().register(ThingResource.class);
+    Arrays.asList(
+      AccountResource.class, FeedbackResource.class, SessionResource.class,
+      StatisticsResource.class, ThingResource.class
+    ).forEach(environment.jersey()::register);
+
+    // @todo #7 remove the delete_me endpoint
+    environment.jersey().register(DeleteMeResource.class);
   }
 
   @Override
