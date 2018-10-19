@@ -17,6 +17,7 @@
 package one.ryd.insider.resources;
 
 import io.dropwizard.auth.Auth;
+import java.time.Instant;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.Valid;
@@ -58,7 +59,8 @@ public final class FeedbackResource {
           reference,
           param.getMessage(),
           param.getPayload(),
-          param.getCategory()
+          param.getCategory(),
+          Instant.now()
         )
       );
     } catch (final Exception exception) {

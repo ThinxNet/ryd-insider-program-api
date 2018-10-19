@@ -16,6 +16,7 @@
 
 package one.ryd.insider.models.feedback;
 
+import java.time.Instant;
 import javax.validation.constraints.NotNull;
 import one.ryd.insider.models.DatabaseModel;
 import org.bson.types.ObjectId;
@@ -43,6 +44,9 @@ public class WidgetFeedback implements DatabaseModel {
   private String payload;
 
   @NotNull
+  private Instant timestamp;
+
+  @NotNull
   private WidgetFeedbackCategory category;
 
   public WidgetFeedback(
@@ -51,7 +55,8 @@ public class WidgetFeedback implements DatabaseModel {
     final String reference,
     final String message,
     final String payload,
-    final WidgetFeedbackCategory category
+    final WidgetFeedbackCategory category,
+    final Instant timestamp
   ) {
     this.user = user;
     this.account = account;
@@ -59,5 +64,6 @@ public class WidgetFeedback implements DatabaseModel {
     this.message = message;
     this.payload = payload;
     this.category = category;
+    this.timestamp = timestamp;
   }
 }
