@@ -49,6 +49,9 @@ public class WidgetFeedback implements DatabaseModel {
   @NotNull
   private WidgetFeedbackCategory category;
 
+  @NotNull
+  private WidgetFeedbackState state = WidgetFeedbackState.UNKNOWN;
+
   public WidgetFeedback(
     final ObjectId user,
     final ObjectId account,
