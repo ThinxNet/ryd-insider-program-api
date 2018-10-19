@@ -57,7 +57,7 @@ public final class FeedbackResource {
           user.entity().getId(),
           user.entity().getAccount(),
           reference,
-          param.getMessage(),
+          param.getMessage().trim(),
           param.getPayload(),
           param.getCategory(),
           Instant.now()
