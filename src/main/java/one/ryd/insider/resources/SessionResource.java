@@ -193,21 +193,22 @@ public final class SessionResource {
           .filter(entry -> entry.type().equals("MAP_WAY"))
           .map(EnvelopeMapWay::new)
           .filter(way -> way.payload().alternatives() == 0)
-          .map(way -> {
+          .map(envelope -> {
             final Query<MapWay> query = this.dsSession.createQuery(MapWay.class)
-              .field("osmId").equal(way.payload().id())
-              .field("timestamp").equal(way.payload().timestamp())
+              .field("osmId").equal(envelope.payload().id())
+              .field("timestamp").equal(envelope.payload().timestamp())
               .field("tags.key").equal("maxspeed")
               .project("address", true)
               .project("geometry", true)
+              .project("nodes", true)
               .project("tags", true);
 
-            final MapWay entity = query.get();
-            if (Objects.isNull(entity)) {
+            final MapWay way = query.get();
+            if (Objects.isNull(way)) {
               return null;
             }
 
-            final String maxSpeed = entity.getTags().stream()
+            final String maxSpeed = way.getTags().stream()
               .filter(tag -> tag.getKey().equals("maxspeed"))
               .findAny().get().getValue();
             if (!StringUtils.isNumeric(maxSpeed)) {
@@ -229,14 +230,20 @@ public final class SessionResource {
               return null;
             }
 
+            final List<Long> matches = Arrays.asList(envelope.payload().matches());
+            final List<Double[]> geomentry = way.getNodes().stream()
+              .filter(matches::contains)
+              .map(node -> way.getGeometry().get(way.getNodes().indexOf(node)))
+              .collect(Collectors.toList());
+
             return JsonNodeFactory.instance.objectNode()
               .putPOJO("segment", segment.getId())
-              .put("timestamp", way.timestamp().toEpochMilli()) // timestamp of the way
-              .put("distanceM", way.payload().distanceM())
+              .put("timestamp", envelope.timestamp().toEpochMilli()) // timestamp of the way
+              .put("distanceM", envelope.payload().distanceM())
               .put("maxSpeedKmH", maxSpeedKmH)
               .put("currentSpeedKmH", fieldValue)
-              .putPOJO("address", entity.getAddress())
-              .putPOJO("geometry", entity.getGeometry());
+              .putPOJO("address", way.getAddress())
+              .putPOJO("geometry", geomentry);
           })
           .filter(Objects::nonNull)
           .collect(Collectors.toList())
