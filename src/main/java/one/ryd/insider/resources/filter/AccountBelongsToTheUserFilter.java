@@ -73,7 +73,9 @@ public class AccountBelongsToTheUserFilter implements ContainerRequestFilter {
   }
 
   // @todo #7 make roles configurable via the annotation
-  private List<ObjectId> accountIds(final InsiderAuthPrincipal user, final List<AccountRole> roles) {
+  private List<ObjectId> accountIds(
+    final InsiderAuthPrincipal user, final List<AccountRole> roles
+  ) {
     return this.dsInsider.createQuery(Account.class)
       .project("_id", true)
       .field("users").elemMatch(

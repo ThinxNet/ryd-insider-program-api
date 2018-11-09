@@ -29,9 +29,9 @@ public final class StringToDeviceStatusValueConverter extends TypeConverter {
 
   @Override
   public DeviceStatusValue decode(
-    final Class targetClass, final Object fromDBObject, final MappedField optionalExtraInfo
+    final Class targetClass, final Object fromDbObject, final MappedField optionalExtraInfo
   ) throws MappingException {
-    final String value = String.valueOf(fromDBObject);
+    final String value = String.valueOf(fromDbObject);
     if (Objects.isNull(value)) {
       return DeviceStatusValue.UNKNOWN;
     }
