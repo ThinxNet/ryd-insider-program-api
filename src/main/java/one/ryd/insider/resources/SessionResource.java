@@ -182,7 +182,7 @@ public final class SessionResource {
       .field("enhancements.type").equal("MAP_WAY")
       .project("attributes.geoSpeedKmH", true)
       .project("attributes.gpsSpeedKmH", true)
-      .project("attributes.obdMaxSpeedKmH", true)
+      .project("attributes.obdSpeedKmH", true)
       .project("enhancements", true)
       .order(Sort.ascending("timestamp"))
       .asList();
