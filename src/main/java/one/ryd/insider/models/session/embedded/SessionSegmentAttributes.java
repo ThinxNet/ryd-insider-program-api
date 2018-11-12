@@ -23,6 +23,7 @@ public final class SessionSegmentAttributes {
   private Double distanceDiffM;
   private Double latitude;
   private Double longitude;
+  private Double obdEngineRpm;
   private Double obdMaxRpm;
   private Double speedKmH;
   private Integer geoSpeedKmH;
@@ -39,6 +40,10 @@ public final class SessionSegmentAttributes {
 
   public Double getLongitude() {
     return this.longitude;
+  }
+
+  public Double obdEngineRpm() {
+    return this.obdEngineRpm;
   }
 
   public Double obdMaxRpm() {
