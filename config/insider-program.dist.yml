@@ -3,6 +3,25 @@ server:
     - type: http
       port: 8090
 
+logging:
+  level: INFO
+  appenders:
+    - type: console
+    - type: gelf
+      threshold: INFO
+      host: udp:graylog2.mydomain.com
+      port: 12201
+      facility: insider_program_development
+      extractStackTrace: true
+      filterStackTrace: true
+      mdcProfiling: true
+      timestampPattern: yyyy-MM-dd HH:mm:ss,SSSZ
+      maximumMessageSize: 8192
+      includeFullMDC: true
+      dynamicMdcFields:
+        - ip.*
+        - ipFields
+
 dbInsider:
   uri: "mongodb://localhost:27017/insider_program?readPreference=secondaryPreferred"
 
