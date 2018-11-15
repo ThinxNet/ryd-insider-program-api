@@ -27,8 +27,8 @@ public final class SessionAlikeDto {
   public Double confidence;
 
   @JsonIgnore
-  public Integer hits;
+  public Long hits;
 
   @JsonIgnore
-  public Integer intersection;
+  public Double intersection;
 }
