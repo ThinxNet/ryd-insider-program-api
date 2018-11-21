@@ -16,6 +16,7 @@
 
 package one.ryd.insider.models.feedback;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 import javax.validation.constraints.NotNull;
 import one.ryd.insider.models.DatabaseModel;
@@ -52,6 +53,9 @@ public class WidgetFeedback implements DatabaseModel {
   @NotNull
   private WidgetFeedbackState state = WidgetFeedbackState.UNKNOWN;
 
+  public WidgetFeedback() {
+  }
+
   public WidgetFeedback(
     final ObjectId user,
     final ObjectId account,
@@ -68,5 +72,42 @@ public class WidgetFeedback implements DatabaseModel {
     this.payload = payload;
     this.category = category;
     this.timestamp = timestamp;
+  }
+
+  public ObjectId getId() {
+    return this.id;
+  }
+
+  public ObjectId getUser() {
+    return this.user;
+  }
+
+  public ObjectId getAccount() {
+    return this.account;
+  }
+
+  public String getReference() {
+    return this.reference;
+  }
+
+  public String getMessage() {
+    return this.message;
+  }
+
+  @JsonIgnore
+  public String getPayload() {
+    return this.payload;
+  }
+
+  public Instant getTimestamp() {
+    return this.timestamp;
+  }
+
+  public WidgetFeedbackCategory getCategory() {
+    return this.category;
+  }
+
+  public WidgetFeedbackState getState() {
+    return this.state;
   }
 }

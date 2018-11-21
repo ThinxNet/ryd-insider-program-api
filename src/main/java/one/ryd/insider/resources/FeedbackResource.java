@@ -20,19 +20,23 @@ import io.dropwizard.auth.Auth;
 import java.time.Instant;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import one.ryd.insider.core.auth.InsiderAuthPrincipal;
+import one.ryd.insider.core.response.InsiderEnvelop;
 import one.ryd.insider.models.feedback.WidgetFeedback;
 import one.ryd.insider.resources.request.FeedbackWidgetParam;
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.Morphia;
+import org.mongodb.morphia.query.Sort;
 
 @Path("/feedback")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -40,9 +44,6 @@ public final class FeedbackResource {
   @Inject
   @Named("datastoreInsider")
   private Datastore dsInsider;
-
-  @Inject
-  private Morphia morphia;
 
   @POST
   @Path("/widget/{id}")
@@ -67,5 +68,20 @@ public final class FeedbackResource {
       return Response.serverError().status(422).build();
     }
     return Response.status(Response.Status.NO_CONTENT).build();
+  }
+
+  @GET
+  public Response fetchAll(
+    @Auth final InsiderAuthPrincipal user,
+    @Context final HttpServletRequest httpRequest
+  ) {
+    return Response.ok(
+      new InsiderEnvelop(
+        this.dsInsider.createQuery(WidgetFeedback.class)
+          .field("user").equal(user.entity().getId())
+          .order(Sort.descending("timestamp"), Sort.ascending("reference"))
+          .asList()
+      )
+    ).build();
   }
 }

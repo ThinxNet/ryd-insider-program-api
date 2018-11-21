@@ -17,6 +17,9 @@
 package one.ryd.insider.core.module;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import java.time.Instant;
+import one.ryd.insider.core.serialize.InstantDeserialize;
+import one.ryd.insider.core.serialize.InstantSerialize;
 import one.ryd.insider.core.serialize.ObjectIdDeserialize;
 import one.ryd.insider.core.serialize.ObjectIdSerialize;
 import org.bson.types.ObjectId;
@@ -24,7 +27,9 @@ import org.bson.types.ObjectId;
 public final class InsiderModule extends SimpleModule {
   @Override
   public void setupModule(final SetupContext context) {
+    this.addDeserializer(Instant.class, new InstantDeserialize());
     this.addDeserializer(ObjectId.class, new ObjectIdDeserialize());
+    this.addSerializer(Instant.class, new InstantSerialize());
     this.addSerializer(ObjectId.class, new ObjectIdSerialize());
     super.setupModule(context);
   }
