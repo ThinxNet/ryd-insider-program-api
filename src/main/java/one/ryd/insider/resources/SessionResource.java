@@ -183,6 +183,7 @@ public final class SessionResource {
       .project("attributes.geoSpeedKmH", true)
       .project("attributes.gpsSpeedKmH", true)
       .project("attributes.obdSpeedKmH", true)
+      .project("attributes.speedKmH", true)
       .project("enhancements", true)
       .order(Sort.ascending("timestamp"))
       .asList();
@@ -218,6 +219,9 @@ public final class SessionResource {
 
             Integer fieldValue = segment.getAttributes().getGeoSpeedKmH();
             switch (source.toLowerCase()) {
+              case "mixed":
+                fieldValue = segment.getAttributes().getSpeedKmH().intValue();
+                break;
               case "gps":
                 fieldValue = segment.getAttributes().getGpsSpeedKmH();
                 break;
