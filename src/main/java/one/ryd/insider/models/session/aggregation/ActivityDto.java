@@ -22,6 +22,7 @@ public final class ActivityDto {
   @Id
   public Integer dayOfYear;
   public Integer count;
+  public Integer distanceM;
   public Integer durationS;
   public Integer geoDistanceM;
   public Integer geoDriveDurationS;

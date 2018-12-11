@@ -84,6 +84,7 @@ public final class StatisticsResource {
       .group(
         Group.grouping("_id", Accumulator.accumulator("$dayOfYear", "end")),
         Group.grouping("count", Accumulator.accumulator("$sum", 1)),
+        Group.grouping("distanceM", Group.sum("statistics.distanceM")),
         Group.grouping("durationS", Group.sum("statistics.durationS")),
         Group.grouping("geoDistanceM", Group.sum("statistics.geoDistanceM")),
         Group.grouping("geoDriveDurationS", Group.sum("statistics.geoDriveDurationS")),
