@@ -20,7 +20,7 @@ import org.mongodb.morphia.annotations.Embedded;
 
 @Embedded
 public final class MapWayAddress {
-  private Integer postcode;
+  private String postcode;
   private String city;
   private String cityDistrict;
   private String country;
@@ -34,7 +34,7 @@ public final class MapWayAddress {
   private String town;
   private String village;
 
-  public Integer getPostcode() {
+  public String getPostcode() {
     return this.postcode;
   }
 
