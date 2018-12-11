@@ -78,7 +78,7 @@ public final class StatisticsResource {
         this.dsSession.createQuery(SessionSummary.class)
           .field("device").equal(thing.getDevice())
           .field("incomplete").equal(false)
-          .field("timestamp").greaterThanOrEq(timestamp)
+          .field("end").greaterThanOrEq(timestamp)
       )
       .sort(Sort.descending("end"))
       .group(
