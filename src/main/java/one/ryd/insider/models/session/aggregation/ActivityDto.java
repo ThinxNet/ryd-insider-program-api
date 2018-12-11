@@ -23,6 +23,7 @@ public final class ActivityDto {
   public Integer dayOfYear;
   public Integer count;
   public Integer distanceM;
+  public Integer driveDurationS;
   public Integer durationS;
   public Integer geoDistanceM;
   public Integer geoDriveDurationS;

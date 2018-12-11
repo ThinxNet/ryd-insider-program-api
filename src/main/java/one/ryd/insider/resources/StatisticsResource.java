@@ -77,7 +77,7 @@ public final class StatisticsResource {
       .match(
         this.dsSession.createQuery(SessionSummary.class)
           .field("device").equal(thing.getDevice())
-          //.field("incomplete").equal(false)
+          .field("incomplete").equal(false)
           .field("timestamp").greaterThanOrEq(timestamp)
       )
       .sort(Sort.descending("end"))
@@ -85,6 +85,7 @@ public final class StatisticsResource {
         Group.grouping("_id", Accumulator.accumulator("$dayOfYear", "end")),
         Group.grouping("count", Accumulator.accumulator("$sum", 1)),
         Group.grouping("distanceM", Group.sum("statistics.distanceM")),
+        Group.grouping("driveDurationS", Group.sum("statistics.driveDurationS")),
         Group.grouping("durationS", Group.sum("statistics.durationS")),
         Group.grouping("geoDistanceM", Group.sum("statistics.geoDistanceM")),
         Group.grouping("geoDriveDurationS", Group.sum("statistics.geoDriveDurationS")),
