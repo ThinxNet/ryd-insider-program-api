@@ -220,7 +220,8 @@ public final class SessionResource {
             Integer fieldValue = segment.getAttributes().getGeoSpeedKmH();
             switch (source.toLowerCase()) {
               case "mixed":
-                fieldValue = segment.getAttributes().getSpeedKmH().intValue();
+                fieldValue = Objects.nonNull(segment.getAttributes().getSpeedKmH())
+                  ? segment.getAttributes().getSpeedKmH().intValue() : null;
                 break;
               case "gps":
                 fieldValue = segment.getAttributes().getGpsSpeedKmH();
