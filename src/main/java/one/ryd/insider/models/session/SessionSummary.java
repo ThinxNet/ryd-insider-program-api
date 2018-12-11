@@ -29,23 +29,21 @@ import org.mongodb.morphia.annotations.Id;
 public class SessionSummary implements DatabaseModel {
   @Id
   private ObjectId id;
-
   private Boolean incomplete;
-
-  private ObjectId device;
-
-  private Instant start;
-
-  private Instant end;
-
-  private Instant timestamp;
-
   private DBObject statistics;
-
+  private Instant start;
+  private Instant end;
+  private Instant timestamp;
   private List<ObjectId> segments;
+  private ObjectId device;
+  private Quality quality;
 
   public ObjectId getId() {
     return id;
+  }
+
+  public Boolean getIncomplete() {
+    return this.incomplete;
   }
 
   public DBObject getStatistics() {
@@ -64,15 +62,19 @@ public class SessionSummary implements DatabaseModel {
     return this.timestamp;
   }
 
-  public Boolean getIncomplete() {
-    return this.incomplete;
-  }
-
   public List<ObjectId> getSegments() {
     return this.segments;
   }
 
   public ObjectId getDevice() {
     return this.device;
+  }
+
+  public Quality getQuality() {
+    return this.quality;
+  }
+
+  public enum Quality {
+    A, B, C, D, E, F // A is the best one
   }
 }
