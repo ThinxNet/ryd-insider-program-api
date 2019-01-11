@@ -574,50 +574,6 @@ public final class SessionResource {
   }
 
   @GET
-  @Path("/{sessionId}/safety")
-  @SessionBelongsToTheUser
-  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
-  public Response safety(
-    @Auth final InsiderAuthPrincipal user, @PathParam("sessionId") final ObjectId id
-  ) {
-    final JsonNodeFactory json = JsonNodeFactory.instance;
-    final ObjectNode empty = json.objectNode().put("count", 0).put("distanceM", 0);
-    final ObjectNode result = json.objectNode()
-      .putPOJO("low", empty).putPOJO("medium", empty).putPOJO("high", empty);
-
-    final Map<String, List<SessionSegment>> groups = this.dsSession
-      .createQuery(SessionSegment.class)
-      .field("session").equal(id)
-      .project("attributes.distanceDiffM", true)
-      .project("attributes.speedKmH", true)
-      .asList().stream()
-      .filter(entry ->
-        Objects.nonNull(entry.getAttributes().getSpeedKmH())
-        && entry.getAttributes().getSpeedKmH() > 0
-      )
-      .collect(
-        Collectors.groupingBy(entry ->
-          (entry.getAttributes().getSpeedKmH() < 40)
-            ? "low" : (entry.getAttributes().getSpeedKmH() < 70) ? "medium" : "high"
-        )
-      );
-
-    groups.keySet().forEach(key ->
-      result.replace(key, empty.deepCopy()
-        .put("count", groups.get(key).size())
-        .put(
-          "distanceM", Math.round(
-            groups.get(key).stream()
-              .mapToDouble(entry -> entry.getAttributes().getDistanceDiffM())
-              .sum()
-          )
-        ))
-    );
-
-    return Response.ok(new InsiderEnvelop(result)).build();
-  }
-
-  @GET
   public Response fetchAll(
     @Auth final InsiderAuthPrincipal user,
     @Context final HttpServletRequest httpRequest
