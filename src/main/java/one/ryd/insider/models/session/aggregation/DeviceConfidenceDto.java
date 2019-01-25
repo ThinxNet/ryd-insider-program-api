@@ -17,24 +17,23 @@
 package one.ryd.insider.models.session.aggregation;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.commons.math3.util.Precision;
+import java.time.Instant;
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Id;
 
 public final class DeviceConfidenceDto {
   @Id
-  private String target;
+  public String origin;
 
-  private Double confidence;
+  public ObjectId device;
+
+  public Double confidence;
+
   @JsonIgnore
   public Double score;
+
+  public Instant timestamp;
+
   @JsonIgnore
   public Integer sampleSize;
-
-  public String getTarget() {
-    return this.target.replace("Diff", "");
-  }
-
-  public Double getConfidence() {
-    return Precision.round(this.confidence, 1);
-  }
 }

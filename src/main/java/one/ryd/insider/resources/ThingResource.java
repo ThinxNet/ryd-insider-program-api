@@ -42,6 +42,7 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.aggregation.Group;
+import org.mongodb.morphia.query.Sort;
 
 @Path("/things")
 @Produces(MediaType.APPLICATION_JSON)
@@ -115,12 +116,16 @@ public final class ThingResource {
       .match(
         this.dsSession.createQuery(SessionConfidence.class)
           .field("device").equal(this.dsInsider.get(Thing.class, id).getDevice())
+          .field("confidence").greaterThan(60) // do not frustrate a user
       )
+      .sort(Sort.descending("timestamp"))
       .group(
         Group.grouping("_id", "target"),
-        Group.grouping("confidence", Group.average("confidence")),
-        Group.grouping("score", Group.average("score")),
-        Group.grouping("sampleSize", Group.max("sampleSize"))
+        Group.grouping("confidence", Group.first("confidence")),
+        Group.grouping("device", Group.first("device")),
+        Group.grouping("sampleSize", Group.first("sampleSize")),
+        Group.grouping("score", Group.first("score")),
+        Group.grouping("timestamp", Group.first("timestamp"))
       )
       .aggregate(DeviceConfidenceDto.class)
       .forEachRemaining(result::add);
