@@ -120,7 +120,7 @@ public final class ThingResource {
       )
       .sort(Sort.descending("timestamp"))
       .group(
-        Group.grouping("_id", "target"),
+        Group.grouping("_id", "origin"),
         Group.grouping("confidence", Group.first("confidence")),
         Group.grouping("device", Group.first("device")),
         Group.grouping("sampleSize", Group.first("sampleSize")),
