@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
@@ -28,7 +29,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -55,6 +55,7 @@ import one.ryd.insider.models.session.embedded.envelope.EnvelopeDeviceEvent;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeMapMatch;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeMapWay;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeWeather;
+import one.ryd.insider.models.thing.Thing;
 import one.ryd.insider.resources.annotation.SessionBelongsToTheUser;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -571,6 +572,51 @@ public final class SessionResource {
       );
 
     return Response.ok(new InsiderEnvelop(results)).build();
+  }
+
+  @GET
+  @Path("/{sessionId}/consumption")
+  @SessionBelongsToTheUser
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  public Response consumption(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("sessionId") final ObjectId id,
+    @Context final HttpServletRequest httpRequest
+  ) {
+    final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
+    final Thing thing = this.dsInsider.createQuery(Thing.class)
+      .field("device").equal(session.getDevice())
+      .get();
+    if (Objects.isNull(thing)) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    final JsonNodeFactory json = JsonNodeFactory.instance;
+    final BasicDBObject statistics = (BasicDBObject) session.getStatistics();
+    final int distanceM = statistics.getInt("distanceM");
+
+    final ObjectNode result = json.objectNode()
+      .put("distanceM", distanceM)
+      .putNull("amountMl")
+      .putNull("amountPerM");
+
+    Double amountMl = null;
+    if (statistics.getDouble("obdFuelLevelLNormality", 10.) < 10.) {
+      amountMl = statistics.getDouble("obdFuelLevelLDiff") * 1000;
+    } else if (
+      Objects.nonNull(thing.getEnvironment().getFuelTankSizeL())
+      && statistics.getDouble("obdFuelLevelPercentNormality", 10.) < 10.
+    ) {
+      amountMl = thing.getEnvironment().getFuelTankSizeL() * 0.01
+        * statistics.getDouble("obdFuelLevelPercentDiff") * 1000;
+    }
+
+    if (Objects.nonNull(amountMl)) {
+      result.put("amountMl", amountMl);
+      result.put("amountPerM", Precision.round(amountMl / distanceM, 3));
+    }
+
+    return Response.ok(new InsiderEnvelop(result)).build();
   }
 
   @GET

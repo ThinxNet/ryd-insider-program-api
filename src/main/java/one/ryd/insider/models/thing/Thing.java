@@ -23,25 +23,22 @@ import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Property;
 
 @Entity(value = "things", noClassnameStored = true)
 public class Thing implements DatabaseModel {
   @Id
   private ObjectId id;
-
   @Embedded
   private List<CustomEntityRelation> users;
-
   private ObjectId account;
-
   private ObjectId device;
-
   private String nickName;
-
   @Embedded
   private ThingYmme ymme;
-
   private ThingType type;
+  @Embedded("status")
+  private ThingEnvironment environment;
 
   public ObjectId getId() {
     return this.id;
@@ -69,5 +66,9 @@ public class Thing implements DatabaseModel {
 
   public ThingType getType() {
     return this.type;
+  }
+
+  public ThingEnvironment getEnvironment() {
+    return this.environment;
   }
 }
