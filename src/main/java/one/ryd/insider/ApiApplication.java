@@ -48,7 +48,7 @@ import org.mongodb.morphia.Morphia;
 
 public final class ApiApplication extends Application<ApiConfiguration> {
   public static void main(final String[] args) throws Exception {
-    (new ApiApplication()).run(args);
+    new ApiApplication().run(args);
   }
 
   @Override

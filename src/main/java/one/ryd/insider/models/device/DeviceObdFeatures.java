@@ -32,7 +32,7 @@ public final class DeviceObdFeatures {
     return this.params;
   }
 
-  private final static class Protocol {
+  private static final class Protocol {
     private Integer code;
     private String description;
 

@@ -1,12 +1,13 @@
 plugins {
   id 'com.github.johnrengelman.shadow' version '4.0.1'
-  id 'net.ltgt.errorprone' version '0.6'
+  id 'net.ltgt.errorprone' version '0.6.1'
+  id 'pl.allegro.tech.build.axion-release' version '1.10.0'
 }
 
 ext {
   versions = [
     checkstyle: '8.15',
-    dropwizard: '1.3.5',
+    dropwizard: '1.3.8',
     gelf: '1.3.7-1',
     geotools: '19.2',
     gradle: '4.10.3',
@@ -36,6 +37,9 @@ repositories {
 }
 
 dependencies {
+  errorprone("com.google.errorprone:error_prone_core:latest.release")
+  errorproneJavac("com.google.errorprone:javac:latest.release")
+
   implementation group: 'io.dropwizard', name: 'dropwizard-auth', version: versions.dropwizard
   implementation group: 'io.dropwizard', name: 'dropwizard-core', version: versions.dropwizard
   implementation group: 'net.gini.dropwizard', name: 'dropwizard-gelf', version: versions.gelf
@@ -55,6 +59,6 @@ shadowJar {
   mergeServiceFiles()
 }
 
-task wrapper(type: Wrapper) {
+wrapper {
   gradleVersion = "${versions.gradle}"
 }
