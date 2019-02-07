@@ -18,7 +18,7 @@ ext {
 }
 
 group 'one.ryd.insider'
-version '1.0-SNAPSHOT'
+version = scmVersion.version
 
 apply plugin: 'application'
 apply plugin: 'checkstyle'

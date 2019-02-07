@@ -3,29 +3,18 @@ box:
   env:
     GRADLE_USER_HOME: "${WERCKER_CACHE_DIR}"
 
-quality:
-  steps:
-    - script:
-      name: code-style check
-      code: |-
-        ./gradlew --console=plain check
-
 build:
   steps:
     - script:
-      name: fat jar
+      name: quality check
+      code: |-
+        ./gradlew --console=plain check
+
+    - script:
+      name: fat jar build
       code: |-
         ./gradlew --console=plain shadowJar
         mv build/libs/*.jar "${WERCKER_OUTPUT_DIR}"
-
-release:
-  steps:
-    - script:
-      name: version bump
-      code: |-
-        ./gradlew release -s \
-          -Prelease.attachRemote=${bamboo.repository.git.repositoryUrl} \
-          -Prelease.disableChecks
 
 deploy:
   steps:
