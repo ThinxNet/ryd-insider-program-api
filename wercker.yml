@@ -18,6 +18,15 @@ build:
         ./gradlew --console=plain shadowJar
         mv build/libs/*.jar "${WERCKER_OUTPUT_DIR}"
 
+release:
+  steps:
+    - script:
+      name: version bump
+      code: |-
+        ./gradlew release -s \
+          -Prelease.attachRemote=${bamboo.repository.git.repositoryUrl} \
+          -Prelease.disableChecks
+
 deploy:
   steps:
     - install-packages:
