@@ -8,5 +8,6 @@ Ryd.one Insider Program
 
 ## Run
 ```bash
+mv config/insider-program.yml.dist config/insider-program.yml
 java -jar ryd-insider-program-api-X.X.jar server config/insider-program.yml
 ```
