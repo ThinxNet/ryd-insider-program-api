@@ -23,7 +23,7 @@ import org.mongodb.morphia.annotations.Id;
 
 public final class DeviceConfidenceDto {
   @Id
-  public String origin;
+  public String dataSet;
 
   public ObjectId device;
 

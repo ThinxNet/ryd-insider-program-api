@@ -27,20 +27,15 @@ import org.mongodb.morphia.annotations.Id;
 public final class SessionConfidence implements DatabaseModel {
   @Id
   private ObjectId id;
-
   private Double confidence;
-
   private Double score;
-
   private Instant timestamp;
-
   private Integer sampleSize;
-
   private ObjectId device;
-
   private String source;
-
-  private String target;
+  private Boolean obdSupport;
+  private String origin;
+  private String dataSet;
 
   public ObjectId getId() {
     return this.id;
@@ -70,7 +65,15 @@ public final class SessionConfidence implements DatabaseModel {
     return this.source;
   }
 
-  public String getTarget() {
-    return this.target;
+  public Boolean getObdSupport() {
+    return this.obdSupport;
+  }
+
+  public String getOrigin() {
+    return this.origin;
+  }
+
+  public String getDataSet() {
+    return this.dataSet;
   }
 }
