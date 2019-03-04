@@ -28,7 +28,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -51,6 +53,7 @@ import one.ryd.insider.models.session.MapWay;
 import one.ryd.insider.models.session.SessionSegment;
 import one.ryd.insider.models.session.SessionSummary;
 import one.ryd.insider.models.session.aggregation.SessionAlikeDto;
+import one.ryd.insider.models.session.embedded.MapWayTag;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeDeviceEvent;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeMapMatch;
 import one.ryd.insider.models.session.embedded.envelope.EnvelopeMapWay;
@@ -70,7 +73,7 @@ import org.mongodb.morphia.aggregation.Projection;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.Sort;
 
-// @todo #7:1h separate methods by domain
+// @todo #7:2h separate methods by domain
 
 @Path("/sessions")
 @Produces(MediaType.APPLICATION_JSON)
@@ -238,19 +241,19 @@ public final class SessionResource {
             }
 
             final List<Long> matches = Arrays.asList(envelope.payload().matches());
-            final List<Double[]> geomentry = way.getNodes().stream()
+            final List<Double[]> geometry = way.getNodes().stream()
               .filter(matches::contains)
               .map(node -> way.getGeometry().get(way.getNodes().indexOf(node)))
               .collect(Collectors.toList());
 
             return JsonNodeFactory.instance.objectNode()
-              .putPOJO("segment", segment.getId())
-              .put("timestamp", envelope.timestamp().toEpochMilli()) // timestamp of the way
+              .put("currentSpeedKmH", fieldValue)
               .put("distanceM", envelope.payload().distanceM())
               .put("maxSpeedKmH", maxSpeedKmH)
-              .put("currentSpeedKmH", fieldValue)
               .putPOJO("address", way.getAddress())
-              .putPOJO("geometry", geomentry);
+              .putPOJO("geometry", geometry)
+              .putPOJO("segment", segment.getId())
+              .putPOJO("timestamp", envelope.timestamp()); // timestamp of the way
           })
           .filter(Objects::nonNull)
           .collect(Collectors.toList())
@@ -577,9 +580,7 @@ public final class SessionResource {
   @SessionBelongsToTheUser
   @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response consumption(
-    @Auth final InsiderAuthPrincipal user,
-    @PathParam("sessionId") final ObjectId id,
-    @Context final HttpServletRequest httpRequest
+    @Auth final InsiderAuthPrincipal user, @PathParam("sessionId") final ObjectId id
   ) {
     final SessionSummary session = this.dsSession.get(SessionSummary.class, id);
     final Thing thing = this.dsInsider.createQuery(Thing.class)
@@ -615,6 +616,98 @@ public final class SessionResource {
     }
 
     return Response.ok(new InsiderEnvelop(result)).build();
+  }
+
+  @GET
+  @Path("/{sessionId}/highlights")
+  @SessionBelongsToTheUser
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  public Response highlights(
+    @Auth final InsiderAuthPrincipal user,
+    @PathParam("sessionId") final ObjectId sessionId
+  ) {
+    final JsonNodeFactory json = JsonNodeFactory.instance;
+    final ArrayNode results = json.arrayNode();
+
+    // overspeed
+    final ObjectNode overspeedAttributes = json.objectNode();
+    overspeedAttributes.set("segments", json.arrayNode());
+
+    final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
+      .field("session").equal(sessionId)
+      .field("enhancements.type").equal("MAP_WAY")
+      .order(Sort.descending("timestamp"))
+      .asList();
+    for (final SessionSegment segment: segments) {
+      if (Objects.isNull(segment.getAttributes().getSpeedKmH())) {
+        continue;
+      }
+      final Query<MapWay> query = this.dsSession.createQuery(MapWay.class)
+        .project("osmId", true)
+        .project("address", true)
+        .project("tags", true);
+
+      final Map<Long, EnvelopeMapWay> ways = segment.getEnhancements().stream()
+        .filter(entry -> entry.type().equals("MAP_WAY"))
+        .map(EnvelopeMapWay::new)
+        .collect(
+          HashMap::new,
+          (hashMap, entry) -> hashMap.put(entry.payload().id(), entry),
+          Map::putAll
+        );
+
+      ways.entrySet().forEach(val ->
+        query.or(
+          query
+            .criteria("osmId").equal(val.getKey())
+            .criteria("timestamp").equal(val.getValue().payload().timestamp())
+        )
+      );
+
+      query.asList().stream()
+        .map(way -> {
+          Integer maxSpeed = -1;
+          try {
+            maxSpeed = Integer.parseUnsignedInt(
+              way.getTags().stream()
+                .filter(tag -> tag.getKey().equals("maxspeed"))
+                .map(MapWayTag::getValue).findAny().orElse("-1")
+            );
+          } catch (final NumberFormatException exception){
+            // do nothing
+          }
+          return new ImmutableTriple<>(
+            way.getOsmId(),
+            maxSpeed,
+            Objects.nonNull(way.getAddress().getCity())
+              || Objects.nonNull(way.getAddress().getTown())
+          );
+        })
+        .filter(pair ->
+          pair.getMiddle() > 0 && (pair.getMiddle() + 5) < segment.getAttributes().getSpeedKmH()
+        )
+        .forEachOrdered(triple ->
+          ((ArrayNode) overspeedAttributes.get("segments")).add(
+            json.objectNode()
+              .put("distanceM", ways.get(triple.getLeft()).payload().distanceM())
+              .put("cityArea", triple.getRight())
+              .put("maxSpeedKmH", triple.getMiddle())
+              .put("speedKmH", segment.getAttributes().getSpeedKmH())
+              .putPOJO("segment", segment.getId())
+              .putPOJO("timestamp", segment.getTimestamp())
+          )
+        );
+    }
+
+    if (overspeedAttributes.get("segments").size() > 0) {
+      results.add(
+        json.objectNode()
+          .put("type", "OVERSPEED")
+          .set("attributes", overspeedAttributes)
+      );
+    }
+
+    return Response.ok(new InsiderEnvelop(results)).build();
   }
 
   @GET
