@@ -656,6 +656,9 @@ public final class SessionResource {
           (hashMap, entry) -> hashMap.put(entry.payload().id(), entry),
           Map::putAll
         );
+      if (ways.isEmpty()) {
+        continue;
+      }
 
       ways.entrySet().forEach(val ->
         query.or(
