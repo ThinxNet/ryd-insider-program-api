@@ -642,10 +642,6 @@ public final class SessionResource {
       if (Objects.isNull(segment.getAttributes().getSpeedKmH())) {
         continue;
       }
-      final Query<MapWay> query = this.dsSession.createQuery(MapWay.class)
-        .project("osmId", true)
-        .project("address", true)
-        .project("tags", true);
 
       final Map<Long, EnvelopeMapWay> ways = segment.getEnhancements().stream()
         .filter(entry -> entry.type().equals("MAP_WAY"))
@@ -660,6 +656,10 @@ public final class SessionResource {
         continue;
       }
 
+      final Query<MapWay> query = this.dsSession.createQuery(MapWay.class)
+        .project("osmId", true)
+        .project("address", true)
+        .project("tags", true);
       ways.entrySet().forEach(val ->
         query.or(
           query
