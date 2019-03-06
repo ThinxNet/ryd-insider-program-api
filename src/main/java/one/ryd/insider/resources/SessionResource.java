@@ -70,6 +70,7 @@ import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.aggregation.Group;
 import org.mongodb.morphia.aggregation.Projection;
+import org.mongodb.morphia.query.Criteria;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.Sort;
 
@@ -642,10 +643,6 @@ public final class SessionResource {
       if (Objects.isNull(segment.getAttributes().getSpeedKmH())) {
         continue;
       }
-      final Query<MapWay> query = this.dsSession.createQuery(MapWay.class)
-        .project("osmId", true)
-        .project("address", true)
-        .project("tags", true);
 
       final Map<Long, EnvelopeMapWay> ways = segment.getEnhancements().stream()
         .filter(entry -> entry.type().equals("MAP_WAY"))
@@ -660,12 +657,18 @@ public final class SessionResource {
         continue;
       }
 
-      ways.entrySet().forEach(val ->
-        query.or(
-          query
-            .criteria("osmId").equal(val.getKey())
-            .criteria("timestamp").equal(val.getValue().payload().timestamp())
-        )
+      final Query<MapWay> query = this.dsSession.createQuery(MapWay.class)
+        .project("osmId", true)
+        .project("address", true)
+        .project("tags", true);
+      query.or(
+        ways.entrySet().stream()
+          .map(val ->
+            query
+              .criteria("osmId").equal(val.getKey())
+              .criteria("timestamp").equal(val.getValue().payload().timestamp())
+          )
+          .toArray(Criteria[]::new)
       );
 
       query.asList().stream()
@@ -688,7 +691,7 @@ public final class SessionResource {
           );
         })
         .filter(pair ->
-          pair.getMiddle() > 0 && (pair.getMiddle() + 5) < segment.getAttributes().getSpeedKmH()
+          pair.getMiddle() > 0 && (pair.getMiddle() + 11) <= segment.getAttributes().getSpeedKmH()
         )
         .forEachOrdered(triple ->
           ((ArrayNode) overspeedAttributes.get("segments")).add(
