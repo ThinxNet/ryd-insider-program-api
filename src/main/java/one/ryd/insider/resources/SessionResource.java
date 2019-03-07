@@ -622,12 +622,16 @@ public final class SessionResource {
   @GET
   @Path("/{sessionId}/highlights")
   @SessionBelongsToTheUser
-  //@CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response highlights(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("sessionId") final ObjectId sessionId
   ) {
     final JsonNodeFactory json = JsonNodeFactory.instance;
+    final SessionSummary session = this.dsSession.createQuery(SessionSummary.class)
+      .field("_id").equal(sessionId)
+      .project("statistics", true)
+      .get();
 
     // overspeed
     final ArrayNode entriesOverspeed = json.arrayNode();
@@ -746,7 +750,12 @@ public final class SessionResource {
       results.add(
         json.objectNode()
           .put("type", "ROAD_CLASSIFICATION")
-          .set("attributes", json.objectNode().set("segments", entriesRoadCategory))
+          .set(
+            "attributes",
+            json.objectNode()
+              .put("distanceM", (int) session.getStatistics().get("distanceM"))
+              .set("segments", entriesRoadCategory)
+          )
       );
     }
     if (entriesOverspeed.size() > 0) {
