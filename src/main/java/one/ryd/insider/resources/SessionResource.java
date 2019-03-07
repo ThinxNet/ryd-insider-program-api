@@ -622,17 +622,16 @@ public final class SessionResource {
   @GET
   @Path("/{sessionId}/highlights")
   @SessionBelongsToTheUser
-  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  //@CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
   public Response highlights(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("sessionId") final ObjectId sessionId
   ) {
     final JsonNodeFactory json = JsonNodeFactory.instance;
-    final ArrayNode results = json.arrayNode();
 
     // overspeed
-    final ObjectNode overspeedAttributes = json.objectNode();
-    overspeedAttributes.set("segments", json.arrayNode());
+    final ArrayNode entriesOverspeed = json.arrayNode();
+    final ArrayNode entriesRoadCategory = json.arrayNode();
 
     final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
       .field("session").equal(sessionId)
@@ -671,7 +670,43 @@ public final class SessionResource {
           .toArray(Criteria[]::new)
       );
 
-      query.asList().stream()
+      final List<MapWay> entries = query.asList();
+
+      final List<String> categoryFederal = Arrays.asList("primary_link", "primary");
+      final List<String> categoryCountry = Arrays
+        .asList("tertiary", "tertiary_link", "unclassified");
+      final Map<String, List<ImmutableTriple<Long, String, String>>> roadCategoryEntries = entries
+        .stream()
+        .flatMap(entry ->
+          entry.getTags().stream()
+            .map(sub -> ImmutableTriple.of(entry.getOsmId(), sub.getKey(), sub.getValue()))
+        )
+        .filter(triple -> triple.getMiddle().equals("highway"))
+        .collect(
+          Collectors.groupingBy(
+            triple -> categoryFederal.contains(triple.getRight())
+              ? "federal" : categoryCountry.contains(triple.getRight())
+                ? "country" : "other"
+          )
+        );
+      if (!roadCategoryEntries.isEmpty()) {
+        roadCategoryEntries.keySet().forEach(key ->
+          entriesRoadCategory.add(
+            json.objectNode()
+              .put(
+                "distanceM",
+                roadCategoryEntries.get(key).stream()
+                  .mapToDouble(entry -> ways.get(entry.getLeft()).payload().distanceM())
+                  .sum()
+              )
+              .put("class", key)
+              .putPOJO("segment", segment.getId())
+              .putPOJO("timestamp", segment.getTimestamp())
+          )
+        );
+      }
+
+      entries.stream()
         .map(way -> {
           Integer maxSpeed = -1;
           try {
@@ -683,7 +718,7 @@ public final class SessionResource {
           } catch (final NumberFormatException exception){
             // do nothing
           }
-          return new ImmutableTriple<>(
+          return ImmutableTriple.of(
             way.getOsmId(),
             maxSpeed,
             Objects.nonNull(way.getAddress().getCity())
@@ -694,7 +729,7 @@ public final class SessionResource {
           pair.getMiddle() > 0 && (pair.getMiddle() + 11) <= segment.getAttributes().getSpeedKmH()
         )
         .forEachOrdered(triple ->
-          ((ArrayNode) overspeedAttributes.get("segments")).add(
+          entriesOverspeed.add(
             json.objectNode()
               .put("distanceM", ways.get(triple.getLeft()).payload().distanceM())
               .put("cityArea", triple.getRight())
@@ -706,11 +741,19 @@ public final class SessionResource {
         );
     }
 
-    if (overspeedAttributes.get("segments").size() > 0) {
+    final ArrayNode results = json.arrayNode();
+    if (entriesRoadCategory.size() > 0) {
+      results.add(
+        json.objectNode()
+          .put("type", "ROAD_CLASSIFICATION")
+          .set("attributes", json.objectNode().set("segments", entriesRoadCategory))
+      );
+    }
+    if (entriesOverspeed.size() > 0) {
       results.add(
         json.objectNode()
           .put("type", "OVERSPEED")
-          .set("attributes", overspeedAttributes)
+          .set("attributes", json.objectNode().set("segments", entriesOverspeed))
       );
     }
 
