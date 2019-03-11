@@ -26,6 +26,8 @@ import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -746,6 +748,51 @@ public final class SessionResource {
     }
 
     final ArrayNode results = json.arrayNode();
+
+    final ArrayNode dayTimePayload = segments.stream()
+      .collect(
+        Collectors.groupingBy(
+          segment -> LocalDateTime.ofInstant(
+            segment.getTimestamp().minusSeconds(segment.getAttributes().getSegmentDurationS()),
+            ZoneOffset.UTC
+          ).getDayOfWeek().getValue(),
+          Collectors.groupingBy(
+            segment -> LocalDateTime.ofInstant(
+              segment.getTimestamp().minusSeconds(segment.getAttributes().getSegmentDurationS()),
+              ZoneOffset.UTC
+            ).getHour()
+          )
+        )
+      )
+      .entrySet().stream()
+      .flatMap(groupDow ->
+        groupDow.getValue().entrySet().stream().map(
+          groupHour -> Triple.of(
+            groupDow.getKey(),
+            groupHour.getKey(),
+            groupHour.getValue().stream()
+              .mapToInt(segment -> segment.getAttributes().getSegmentDurationS()).sum()
+          )
+        )
+      )
+      .collect(
+        json::arrayNode,
+        (haystack, triple) -> haystack.add(
+          json.objectNode()
+            .put("dayOfWeek", triple.getLeft())
+            .put("durationS", triple.getRight())
+            .put("hourNumber", triple.getMiddle())
+        ),
+        ArrayNode::addAll
+      );
+    if (dayTimePayload.size() > 0) {
+      results.add(
+        json.objectNode()
+          .put("type", "TIME_OF_DAY")
+          .set("attributes", json.objectNode().set("intervals", dayTimePayload))
+      );
+    }
+
     if (entriesRoadCategory.size() > 0) {
       results.add(
         json.objectNode()
@@ -753,7 +800,7 @@ public final class SessionResource {
           .set(
             "attributes",
             json.objectNode()
-              .put("distanceM", (int) session.getStatistics().get("distanceM"))
+              .put("sessionDistanceM", (int) session.getStatistics().get("distanceM"))
               .set("segments", entriesRoadCategory)
           )
       );
