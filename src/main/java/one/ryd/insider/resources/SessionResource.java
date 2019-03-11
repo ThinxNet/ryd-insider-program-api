@@ -641,7 +641,6 @@ public final class SessionResource {
 
     final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
       .field("session").equal(sessionId)
-      .field("enhancements.type").equal("MAP_WAY")
       .order(Sort.descending("timestamp"))
       .asList();
     for (final SessionSegment segment: segments) {
