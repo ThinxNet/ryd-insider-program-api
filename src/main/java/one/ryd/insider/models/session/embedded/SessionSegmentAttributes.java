@@ -26,6 +26,7 @@ public final class SessionSegmentAttributes {
   private Double obdEngineRpm;
   private Double obdMaxRpm;
   private Double speedKmH;
+  private Integer segmentDurationS;
   private Integer geoSpeedKmH;
   private Integer gpsSpeedKmH;
   private Integer obdSpeedKmH;
@@ -52,6 +53,10 @@ public final class SessionSegmentAttributes {
 
   public Double getSpeedKmH() {
     return this.speedKmH;
+  }
+
+  public Integer getSegmentDurationS() {
+    return this.segmentDurationS;
   }
 
   public Integer getGeoSpeedKmH() {
