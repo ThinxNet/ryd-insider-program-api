@@ -22,14 +22,20 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryCollection;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.Point;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
-import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +73,7 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.util.Precision;
 import org.bson.types.ObjectId;
-import org.geotools.referencing.GeodeticCalculator;
+import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.aggregation.Group;
@@ -296,7 +302,7 @@ public final class SessionResource {
   @GET
   @Path("/{sessionId}/locations")
   @SessionBelongsToTheUser
-  @CacheControl(maxAge = 1, maxAgeUnit = TimeUnit.DAYS)
+  @CacheControl(maxAge = 7, maxAgeUnit = TimeUnit.DAYS)
   public Response fetchAllLocations(
     @Auth final InsiderAuthPrincipal user,
     @PathParam("sessionId") final ObjectId id,
@@ -310,6 +316,11 @@ public final class SessionResource {
 
     switch (source) {
       case "mixed": {
+        final List<Triple<SessionSegment, List<Double[]>, String>> bufferResults =
+          new ArrayList<>();
+        final List<Triple<SessionSegment, List<Double[]>, String>> bufferGeo =
+          new ArrayList<>();
+
         final List<SessionSegment> segments = query
           .field("attributes.latitude").exists()
           .project("attributes.latitude", true)
@@ -319,83 +330,76 @@ public final class SessionResource {
           .order(Sort.ascending("timestamp"))
           .asList();
 
-        final List<Triple<ObjectId, List<Double[]>, String>> buffer = new ArrayList<>();
-        final int segmentsCount = segments.size();
-
-        Double[] lastSuitableCoordinate = null;
-        Instant lastMapLocationTimestamp = null;
-
-        for (int idx = 0; idx < segmentsCount; idx++) {
-          final SessionSegment segment = segments.get(idx);
-          final Triple<ObjectId, List<Double[]>, String> point = new ImmutableTriple<>(
-            segment.getId(),
-            Arrays.<Double[]>asList(new Double[]{
-              segment.getAttributes().getLongitude(),
-              segment.getAttributes().getLatitude()
-            }),
-            null
-          );
-
-          final List<EnvelopeMapMatch> list = segment.getEnhancements().stream()
+        segments.forEach(segment -> {
+          final Double[] singleCoordinate = new Double[]{
+            segment.getAttributes().getLongitude(),
+            segment.getAttributes().getLatitude()
+          };
+          final List<EnvelopeMapMatch> matches = segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
             .map(EnvelopeMapMatch::new)
             .filter(enhancement -> enhancement.payload().alternatives() == 0)
             .collect(Collectors.toList());
+          if (matches.isEmpty()
+            || segments.indexOf(segment) == 0
+            || segments.indexOf(segment) == segments.size() - 1) {
+            bufferGeo.add(Triple.of(segment, Collections.singletonList(singleCoordinate), null));
+            if (matches.isEmpty()) {
+              return;
+            }
+          }
 
-          // always inject the first coordinate
-          if (idx < 1) {
-            coordinates.add(point);
-          } else if (list.isEmpty()) {
-            if (Objects.isNull(lastMapLocationTimestamp)
-              || (
-                lastMapLocationTimestamp.isBefore(segment.getTimestamp())
-                && Duration
-                  .between(lastMapLocationTimestamp, segment.getTimestamp()).getSeconds() > 5
+          matches.forEach(entry ->
+            bufferResults
+              .add(Triple.of(segment, entry.payload().coordinates(), entry.payload().name()))
+          );
+
+          final LineString tmp = JTSFactoryFinder.getGeometryFactory().createLineString(
+            matches.stream().map(e -> e.payload().coordinates())
+              .flatMap(Collection::stream)
+              .map(pair -> new Coordinate(pair[0], pair[1]))
+              .toArray(Coordinate[]::new)
+          );
+          final Point point = JTSFactoryFinder.getGeometryFactory()
+            .createPoint(new Coordinate(singleCoordinate[0], singleCoordinate[1]));
+          if (!tmp.norm().isWithinDistance(point, 0.0001)) {
+            bufferGeo.add(Triple.of(segment, Collections.singletonList(singleCoordinate), null));
+          }
+        });
+
+        bufferResults.add(0, bufferGeo.remove(0));
+
+        GeometryCollection collection = JTSFactoryFinder.getGeometryFactory()
+          .createGeometryCollection(
+            bufferResults.stream()
+              .map(triple ->
+                (triple.getMiddle().size() > 1)
+                  ? JTSFactoryFinder.getGeometryFactory().createLineString(
+                      triple.getMiddle().stream()
+                        .map(coordinate -> new Coordinate(coordinate[0], coordinate[1]))
+                        .toArray(Coordinate[]::new)
+                    )
+                  : JTSFactoryFinder.getGeometryFactory().createPoint(
+                      new Coordinate(triple.getMiddle().get(0)[0], triple.getMiddle().get(0)[1])
+                    )
               )
-            ) {
-              coordinates.add(point);
-              buffer.add(point);
-              continue;
-            }
-          }
+              .toArray(Geometry[]::new)
+          );
 
-          if (buffer.size() > 0 && Objects.nonNull(lastSuitableCoordinate)) {
-            final GeodeticCalculator calc = new GeodeticCalculator();
-            for (int i = 0; i < buffer.size(); i++) {
-              final Double[] locationPrevious = (i < 1)
-                ? lastSuitableCoordinate : buffer.get(i - 1).getMiddle().get(0);
-              final Double[] locationNext = (i == buffer.size() - 1)
-                ? list.get(0).payload().coordinates().get(0) : buffer.get(i + 1).getMiddle().get(0);
-              final Double[] locationCurrent = buffer.get(i).getMiddle().get(0);
-
-              calc.setStartingGeographicPoint(locationPrevious[0], locationPrevious[1]);
-              calc.setDestinationGeographicPoint(locationNext[0], locationNext[1]);
-              double distanceDirect = calc.getOrthodromicDistance();
-
-              calc.setStartingGeographicPoint(locationPrevious[0], locationPrevious[1]);
-              calc.setDestinationGeographicPoint(locationCurrent[0], locationCurrent[1]);
-              double distanceFromCurrent = calc.getOrthodromicDistance();
-
-              if (distanceDirect <= distanceFromCurrent
-                || distanceFromCurrent < 10
-                || distanceDirect - distanceFromCurrent < 10) {
-                coordinates.remove(buffer.get(i));
-                buffer.remove(i);
-                i--;
-              }
-            }
-          }
-
-          buffer.clear();
-
-          for (final EnvelopeMapMatch entry: list) {
-            final List<Double[]> cords = entry.payload().coordinates();
-            coordinates.add(new ImmutableTriple<>(segment.getId(), cords, entry.payload().name()));
-            lastSuitableCoordinate = cords.get(cords.size() - 1);
-            lastMapLocationTimestamp = entry.timestamp()
-              .plusMillis(Math.round(entry.payload().durationS() * 1000));
+        for (int idx = 0; idx < bufferGeo.size() - 1; idx++) {
+          final Double[] current = bufferGeo.get(idx).getMiddle().get(0);
+          final Point point = JTSFactoryFinder.getGeometryFactory()
+            .createPoint(new Coordinate(current[0], current[1]));
+          if (!collection.isWithinDistance(point, 0.0005)) {
+            bufferResults.add(bufferGeo.get(idx));
           }
         }
+
+        bufferResults.add(bufferGeo.get(bufferGeo.size() - 1));
+        bufferResults.sort(Comparator.comparing(entry -> entry.getLeft().getTimestamp()));
+        bufferResults.forEach(entry ->
+          coordinates.add(Triple.of(entry.getLeft().getId(), entry.getMiddle(), entry.getRight()))
+        );
       } break;
 
       case "gps": {
