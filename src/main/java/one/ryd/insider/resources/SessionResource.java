@@ -25,7 +25,7 @@ import com.mongodb.DBObject;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
@@ -320,6 +320,7 @@ public final class SessionResource {
           new ArrayList<>();
         final List<Triple<SessionSegment, List<Double[]>, String>> bufferGeo =
           new ArrayList<>();
+        final GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
 
         final List<SessionSegment> segments = query
           .field("attributes.latitude").exists()
@@ -354,14 +355,16 @@ public final class SessionResource {
               .add(Triple.of(segment, entry.payload().coordinates(), entry.payload().name()))
           );
 
-          final LineString tmp = JTSFactoryFinder.getGeometryFactory().createLineString(
-            matches.stream().map(e -> e.payload().coordinates())
-              .flatMap(Collection::stream)
-              .map(pair -> new Coordinate(pair[0], pair[1]))
-              .toArray(Coordinate[]::new)
-          );
-          final Point point = JTSFactoryFinder.getGeometryFactory()
+          final Coordinate[] matchedPoints = matches.stream().map(e -> e.payload().coordinates())
+            .flatMap(Collection::stream)
+            .map(pair -> new Coordinate(pair[0], pair[1]))
+            .toArray(Coordinate[]::new);
+          final Geometry tmp = matchedPoints.length > 1
+            ? geometryFactory.createLineString(matchedPoints)
+            : geometryFactory.createPoint(matchedPoints[0]);
+          final Point point = geometryFactory
             .createPoint(new Coordinate(singleCoordinate[0], singleCoordinate[1]));
+
           if (!tmp.norm().isWithinDistance(point, 0.0001)) {
             bufferGeo.add(Triple.of(segment, Collections.singletonList(singleCoordinate), null));
           }
@@ -369,27 +372,25 @@ public final class SessionResource {
 
         bufferResults.add(0, bufferGeo.remove(0));
 
-        GeometryCollection collection = JTSFactoryFinder.getGeometryFactory()
-          .createGeometryCollection(
-            bufferResults.stream()
-              .map(triple ->
-                (triple.getMiddle().size() > 1)
-                  ? JTSFactoryFinder.getGeometryFactory().createLineString(
-                      triple.getMiddle().stream()
-                        .map(coordinate -> new Coordinate(coordinate[0], coordinate[1]))
-                        .toArray(Coordinate[]::new)
-                    )
-                  : JTSFactoryFinder.getGeometryFactory().createPoint(
-                      new Coordinate(triple.getMiddle().get(0)[0], triple.getMiddle().get(0)[1])
-                    )
-              )
-              .toArray(Geometry[]::new)
-          );
+        GeometryCollection collection = geometryFactory.createGeometryCollection(
+          bufferResults.stream()
+            .map(triple ->
+              (triple.getMiddle().size() > 1)
+                ? JTSFactoryFinder.getGeometryFactory().createLineString(
+                    triple.getMiddle().stream()
+                      .map(coordinate -> new Coordinate(coordinate[0], coordinate[1]))
+                      .toArray(Coordinate[]::new)
+                  )
+                : JTSFactoryFinder.getGeometryFactory().createPoint(
+                    new Coordinate(triple.getMiddle().get(0)[0], triple.getMiddle().get(0)[1])
+                  )
+            )
+            .toArray(Geometry[]::new)
+        );
 
         for (int idx = 0; idx < bufferGeo.size() - 1; idx++) {
           final Double[] current = bufferGeo.get(idx).getMiddle().get(0);
-          final Point point = JTSFactoryFinder.getGeometryFactory()
-            .createPoint(new Coordinate(current[0], current[1]));
+          final Point point = geometryFactory.createPoint(new Coordinate(current[0], current[1]));
           if (!collection.isWithinDistance(point, 0.0005)) {
             bufferResults.add(bufferGeo.get(idx));
           }
