@@ -370,8 +370,6 @@ public final class SessionResource {
           }
         });
 
-        bufferResults.add(0, bufferGeo.remove(0));
-
         GeometryCollection collection = geometryFactory.createGeometryCollection(
           bufferResults.stream()
             .map(triple ->
@@ -388,10 +386,12 @@ public final class SessionResource {
             .toArray(Geometry[]::new)
         );
 
+        bufferResults.add(0, bufferGeo.remove(0));
+
         for (int idx = 0; idx < bufferGeo.size() - 1; idx++) {
           final Double[] current = bufferGeo.get(idx).getMiddle().get(0);
           final Point point = geometryFactory.createPoint(new Coordinate(current[0], current[1]));
-          if (!collection.isWithinDistance(point, 0.0005)) {
+          if (!collection.isWithinDistance(point, 0.0008)) {
             bufferResults.add(bufferGeo.get(idx));
           }
         }
