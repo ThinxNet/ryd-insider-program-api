@@ -365,7 +365,7 @@ public final class SessionResource {
           final Point point = geometryFactory
             .createPoint(new Coordinate(singleCoordinate[0], singleCoordinate[1]));
 
-          if (!tmp.norm().isWithinDistance(point, 0.0001)) {
+          if (!tmp.norm().isWithinDistance(point, 0.005)) {
             bufferGeo.add(Triple.of(segment, Collections.singletonList(singleCoordinate), null));
           }
         });
