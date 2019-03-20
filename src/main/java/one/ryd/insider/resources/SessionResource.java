@@ -151,7 +151,7 @@ public final class SessionResource {
         segment.getEnhancements().stream()
           .filter(entry -> entry.type().equals("MAP_WAY"))
           .map(EnvelopeMapWay::new)
-          .filter(way -> way.payload().alternatives() == 0)
+          .filter(way -> way.payload().confidence() >= 0.9 || way.payload().alternatives() == 0)
           .map(way -> {
             final MapWay entity = this.dsSession.createQuery(MapWay.class)
               .field("osmId").equal(way.payload().id())
@@ -207,7 +207,7 @@ public final class SessionResource {
         segment.getEnhancements().stream()
           .filter(entry -> entry.type().equals("MAP_WAY"))
           .map(EnvelopeMapWay::new)
-          .filter(way -> way.payload().alternatives() == 0)
+          .filter(way -> way.payload().confidence() >= 0.9 || way.payload().alternatives() == 0)
           .map(envelope -> {
             final Query<MapWay> query = this.dsSession.createQuery(MapWay.class)
               .field("osmId").equal(envelope.payload().id())
@@ -339,7 +339,7 @@ public final class SessionResource {
           final List<EnvelopeMapMatch> matches = segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
             .map(EnvelopeMapMatch::new)
-            .filter(enhancement -> enhancement.payload().alternatives() == 0)
+            .filter(e -> e.payload().confidence() >= 0.9 || e.payload().alternatives() == 0)
             .collect(Collectors.toList());
           if (matches.isEmpty()
             || segments.indexOf(segment) == 0
@@ -656,7 +656,7 @@ public final class SessionResource {
       final Map<Long, EnvelopeMapWay> ways = segment.getEnhancements().stream()
         .filter(entry -> entry.type().equals("MAP_WAY"))
         .map(EnvelopeMapWay::new)
-        .filter(way -> way.payload().alternatives() == 0)
+        .filter(way -> way.payload().confidence() >= 0.9 || way.payload().alternatives() == 0)
         .collect(
           HashMap::new,
           (hashMap, entry) -> hashMap.put(entry.payload().id(), entry),
