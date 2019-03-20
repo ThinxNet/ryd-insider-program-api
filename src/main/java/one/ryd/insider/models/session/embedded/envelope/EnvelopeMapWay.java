@@ -81,6 +81,7 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
     private final Long timestamp;
     private final Long[] matches;
     private final Integer alternatives;
+    private final Double confidence;
 
     public Payload(
       final Long id,
@@ -89,7 +90,8 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
       final Double durationS,
       final Long timestamp,
       final Long[] matches,
-      final Integer alternatives
+      final Integer alternatives,
+      final Double confidence
     ) {
       this.id = id;
       this.speedMs = speedMs;
@@ -98,6 +100,7 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
       this.timestamp = timestamp;
       this.matches = matches;
       this.alternatives = alternatives;
+      this.confidence = confidence;
     }
 
     public Payload(final BasicDBObject doc) {
@@ -108,7 +111,8 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
         doc.getDouble("durationS"),
         doc.getLong("timestamp"),
         ((BasicDBList) doc.getOrDefault("matches", new BasicDBList())).toArray(new Long[0]),
-        doc.getInt("alternatives")
+        doc.getInt("alternatives"),
+        doc.getDouble("confidence", .0)
       );
     }
 
@@ -138,6 +142,10 @@ public final class EnvelopeMapWay implements Envelope<EnvelopeMapWay.Payload> {
 
     public Integer alternatives() {
       return this.alternatives;
+    }
+
+    public Double confidence() {
+      return this.confidence;
     }
   }
 }
