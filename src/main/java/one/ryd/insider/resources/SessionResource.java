@@ -618,7 +618,7 @@ public final class SessionResource {
         * statistics.getDouble("obdFuelLevelPercentDiff") * 1000;
     }
 
-    if (Objects.nonNull(amountMl)) {
+    if (Objects.nonNull(amountMl) && amountMl > .0) {
       result.put("amountMl", amountMl);
       result.put("amountPerM", Precision.round(amountMl / distanceM, 3));
     }
