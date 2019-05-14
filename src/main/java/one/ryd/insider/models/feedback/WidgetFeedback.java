@@ -22,9 +22,20 @@ import javax.validation.constraints.NotNull;
 import one.ryd.insider.models.DatabaseModel;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Index;
+import org.mongodb.morphia.annotations.IndexOptions;
+import org.mongodb.morphia.annotations.Indexes;
 
 @Entity(value = "ip_feedback_widget", noClassnameStored = true)
+@Indexes({
+  @Index(
+    options = @IndexOptions(unique = true),
+    fields = {@Field("user"), @Field("timestamp")}
+  ),
+  @Index(fields = {@Field("updatedAt")})
+})
 public class WidgetFeedback implements DatabaseModel {
   @Id
   private ObjectId id;
@@ -47,11 +58,15 @@ public class WidgetFeedback implements DatabaseModel {
   @NotNull
   private Instant timestamp;
 
+  private Instant updatedAt;
+
   @NotNull
   private WidgetFeedbackCategory category;
 
   @NotNull
   private WidgetFeedbackState state = WidgetFeedbackState.UNKNOWN;
+
+  private String response;
 
   public WidgetFeedback() {
   }
@@ -103,11 +118,19 @@ public class WidgetFeedback implements DatabaseModel {
     return this.timestamp;
   }
 
+  public Instant getUpdatedAt() {
+    return this.updatedAt;
+  }
+
   public WidgetFeedbackCategory getCategory() {
     return this.category;
   }
 
   public WidgetFeedbackState getState() {
     return this.state;
+  }
+
+  public String getResponse() {
+    return this.response;
   }
 }

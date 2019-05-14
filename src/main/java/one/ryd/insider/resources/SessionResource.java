@@ -339,7 +339,7 @@ public final class SessionResource {
           final List<EnvelopeMapMatch> matches = segment.getEnhancements().stream()
             .filter(enhancement -> enhancement.type().equals("MAP_MATCH"))
             .map(EnvelopeMapMatch::new)
-            .filter(e -> e.payload().confidence() >= 0.9 || e.payload().alternatives() == 0)
+            .filter(e -> e.payload().alternatives() == 0)
             .collect(Collectors.toList());
           if (matches.isEmpty()
             || segments.indexOf(segment) == 0
