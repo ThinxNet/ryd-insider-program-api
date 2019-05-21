@@ -681,10 +681,11 @@ public final class SessionResource {
       );
 
       final List<MapWay> entries = query.asList();
-
-      final List<String> categoryFederal = Arrays.asList("primary_link", "primary");
-      final List<String> categoryCountry = Arrays
-        .asList("tertiary", "tertiary_link", "unclassified");
+      final Map<String, List<String>> mapping = new HashMap(3) {
+        { put("federal", Arrays.asList("primary", "primary_link", "service")); }
+        { put("country", Arrays.asList("secondary_link", "secondary")); }
+        { put("highway", Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link")); }
+      };
       final Map<String, List<ImmutableTriple<Long, String, String>>> roadCategoryEntries = entries
         .stream()
         .flatMap(entry ->
@@ -694,9 +695,10 @@ public final class SessionResource {
         .filter(triple -> triple.getMiddle().equals("highway"))
         .collect(
           Collectors.groupingBy(
-            triple -> categoryFederal.contains(triple.getRight())
-              ? "federal" : categoryCountry.contains(triple.getRight())
-                ? "country" : "other"
+            triple ->
+              mapping.keySet().stream()
+                .filter(key -> mapping.get(key).contains(triple.getRight()))
+                .findFirst().orElse("other")
           )
         );
       if (!roadCategoryEntries.isEmpty()) {
