@@ -656,7 +656,7 @@ public final class SessionResource {
       final Map<Long, EnvelopeMapWay> ways = segment.getEnhancements().stream()
         .filter(entry -> entry.type().equals("MAP_WAY"))
         .map(EnvelopeMapWay::new)
-        .filter(way -> way.payload().confidence() >= 0.9 || way.payload().alternatives() == 0)
+        .filter(way -> way.payload().confidence() >= 0.8 || way.payload().alternatives() == 0)
         .collect(
           HashMap::new,
           (hashMap, entry) -> hashMap.put(entry.payload().id(), entry),
