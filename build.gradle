@@ -1,15 +1,15 @@
 plugins {
   id 'com.github.ben-manes.versions' version '0.21.0'
   id 'com.github.johnrengelman.shadow' version '5.0.0'
-  id 'net.ltgt.errorprone' version '0.7.1'
-  id 'pl.allegro.tech.build.axion-release' version '1.10.0'
+  id 'net.ltgt.errorprone' version '0.8'
+  id 'pl.allegro.tech.build.axion-release' version '1.10.1'
 }
 
 ext {
   versions = [
     checkstyle: '8.15',
-    dropwizard: '1.3.9',
-    gelf      : '1.3.7-1',
+    dropwizard: '1.3.11',
+    gelf      : '1.3.10-1',
     geotools  : '19.3',
     gradle    : '5.2.1',
     math3     : '3.6.1',
