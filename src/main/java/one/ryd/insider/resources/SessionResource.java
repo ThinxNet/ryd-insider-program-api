@@ -682,7 +682,7 @@ public final class SessionResource {
 
       final List<MapWay> entries = query.asList();
       final Map<String, List<String>> mapping = new HashMap(3) {
-        { put("federal", Arrays.asList("primary", "primary_link", "service")); }
+        { put("federal", Arrays.asList("primary", "primary_link")); }
         { put("country", Arrays.asList("secondary_link", "secondary")); }
         { put("highway", Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link")); }
       };
