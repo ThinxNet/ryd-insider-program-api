@@ -22,11 +22,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.caching.CacheControl;
 import java.time.LocalDateTime;
@@ -74,6 +69,11 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.util.Precision;
 import org.bson.types.ObjectId;
 import org.geotools.geometry.jts.JTSFactoryFinder;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.aggregation.Group;
@@ -646,22 +646,18 @@ public final class SessionResource {
 
     final List<SessionSegment> segments = this.dsSession.createQuery(SessionSegment.class)
       .field("session").equal(sessionId)
-      .order(Sort.descending("timestamp"))
+      .order(Sort.ascending("timestamp"))
       .asList();
     for (final SessionSegment segment: segments) {
       if (Objects.isNull(segment.getAttributes().getSpeedKmH())) {
         continue;
       }
 
-      final Map<Long, EnvelopeMapWay> ways = segment.getEnhancements().stream()
+      final Map<Long, List<EnvelopeMapWay>> ways = segment.getEnhancements().stream()
         .filter(entry -> entry.type().equals("MAP_WAY"))
         .map(EnvelopeMapWay::new)
         .filter(way -> way.payload().confidence() >= 0.8 || way.payload().alternatives() == 0)
-        .collect(
-          HashMap::new,
-          (hashMap, entry) -> hashMap.put(entry.payload().id(), entry),
-          Map::putAll
-        );
+        .collect(Collectors.groupingBy(entry -> entry.payload().id()));
       if (ways.isEmpty()) {
         continue;
       }
@@ -675,7 +671,7 @@ public final class SessionResource {
           .map(val ->
             query
               .criteria("osmId").equal(val.getKey())
-              .criteria("timestamp").equal(val.getValue().payload().timestamp())
+              .criteria("timestamp").equal(val.getValue().get(0).payload().timestamp())
           )
           .toArray(Criteria[]::new)
       );
@@ -708,7 +704,10 @@ public final class SessionResource {
               .put(
                 "distanceM",
                 roadCategoryEntries.get(key).stream()
-                  .mapToDouble(entry -> ways.get(entry.getLeft()).payload().distanceM())
+                  .mapToDouble(entry ->
+                    ways.get(entry.getLeft()).stream()
+                      .mapToDouble(ref -> ref.payload().distanceM()).sum()
+                  )
                   .sum()
               )
               .put("class", key)
@@ -743,7 +742,10 @@ public final class SessionResource {
         .forEachOrdered(triple ->
           entriesOverspeed.add(
             json.objectNode()
-              .put("distanceM", ways.get(triple.getLeft()).payload().distanceM())
+              .put("distanceM",
+                ways.get(triple.getLeft()).stream()
+                  .mapToDouble(ref -> ref.payload().distanceM()).sum()
+              )
               .put("cityArea", triple.getRight())
               .put("maxSpeedKmH", triple.getMiddle())
               .put("speedKmH", segment.getAttributes().getSpeedKmH())
