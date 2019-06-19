@@ -396,7 +396,9 @@ public final class SessionResource {
           }
         }
 
-        bufferResults.add(bufferGeo.get(bufferGeo.size() - 1));
+        if (!bufferGeo.isEmpty()) {
+          bufferResults.add(bufferGeo.get(bufferGeo.size() - 1));
+        }
         bufferResults.sort(Comparator.comparing(entry -> entry.getLeft().getTimestamp()));
         bufferResults.forEach(entry ->
           coordinates.add(Triple.of(entry.getLeft().getId(), entry.getMiddle(), entry.getRight()))
