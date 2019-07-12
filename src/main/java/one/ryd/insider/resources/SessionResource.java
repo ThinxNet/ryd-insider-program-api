@@ -225,7 +225,7 @@ public final class SessionResource {
 
             final String maxSpeed = way.getTags().stream()
               .filter(tag -> tag.getKey().equals("maxspeed"))
-              .findAny().get().getValue();
+              .findAny().get().getValue().replace("walk", "7");
             if (!StringUtils.isNumeric(maxSpeed)) {
               return null;
             }
@@ -726,7 +726,9 @@ public final class SessionResource {
             maxSpeed = Integer.parseUnsignedInt(
               way.getTags().stream()
                 .filter(tag -> tag.getKey().equals("maxspeed"))
-                .map(MapWayTag::getValue).findAny().orElse("-1")
+                .map(MapWayTag::getValue)
+                .map(val -> val.replace("walk", "7"))
+                .findAny().orElse("-1")
             );
           } catch (final NumberFormatException exception){
             // do nothing
