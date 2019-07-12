@@ -223,6 +223,7 @@ public final class SessionResource {
               return null;
             }
 
+            // @todo #7:15min move maxspeed to a separate field in the db
             final String maxSpeed = way.getTags().stream()
               .filter(tag -> tag.getKey().equals("maxspeed"))
               .findAny().get().getValue().replace("walk", "7");
@@ -723,6 +724,7 @@ public final class SessionResource {
         .map(way -> {
           Integer maxSpeed = -1;
           try {
+            // @todo #7:15min move maxspeed to a separate field in the db
             maxSpeed = Integer.parseUnsignedInt(
               way.getTags().stream()
                 .filter(tag -> tag.getKey().equals("maxspeed"))
